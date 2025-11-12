@@ -55,16 +55,16 @@ public class SecurityConfig {
         try {
             http.csrf(AbstractHttpConfigurer::disable);
             http.authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(mvc.pattern("/login.xhtml")).permitAll()
+                    .requestMatchers(mvc.pattern("/pages/login.xhtml")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/jakarta.faces.resource/**")).permitAll()
                     .anyRequest()
                     .authenticated())
                     .formLogin(formLogin -> formLogin
-                            .loginPage("/login.xhtml").permitAll()
-                            .failureUrl("/login.xhtml?error=true")
-                            .defaultSuccessUrl("/home.xhtml"))
+                            .loginPage("/pages/login.xhtml").permitAll()
+                            .failureUrl("/pages/login.xhtml?error=true")
+                            .defaultSuccessUrl("/pages/home.xhtml"))
                     .logout(logout -> logout
-                            .logoutSuccessUrl("/login.xhtml")
+                            .logoutSuccessUrl("/pages/login.xhtml")
                             .deleteCookies("JSESSIONID"));
             return http.build();
         } catch (Exception ex) {
