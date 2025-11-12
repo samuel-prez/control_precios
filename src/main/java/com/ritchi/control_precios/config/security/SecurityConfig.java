@@ -36,14 +36,14 @@ public class SecurityConfig {
         // Crea usuarios manualmente
         manager.createUser(User.builder()
                 .username("admin")
-                .password(encoder.encode("123")) // Contraseña codificada
-                .authorities("ROLE_ADMIN") // Rol de admin
+                .password(encoder.encode("123")) 
+                .authorities("ROLE_ADMIN") 
                 .build());
 
         manager.createUser(User.builder()
                 .username("user")
-                .password(encoder.encode("123")) // Contraseña codificada
-                .authorities("ROLE_USER") // Rol de usuario
+                .password(encoder.encode("123")) 
+                .authorities("ROLE_USER") 
                 .build());
 
         // Devuelve el administrador de detalles de usuario con los usuarios definidos
