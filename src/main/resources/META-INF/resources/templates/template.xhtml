@@ -8,6 +8,7 @@
 
     <h:head>
         <title>name="titulo"/></title>
+        <link rel="icon" type="image/png" href="images/icon.png"/>
         <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta name="mobile-web-app-capable" content="yes"/>
@@ -19,15 +20,15 @@
         <h:form id="menuForm">
             <p:menubar>
                 <p:menuitem value="Inicio" icon="pi pi-home" outcome="/pages/home.xhtml"/>
-                <p:menuitem value="Productos" icon="pi pi-box"/>
-                <p:menuitem value="Precios" icon="pi pi-dollar"/>
+                <p:menuitem value="Productos" icon="pi pi-box"  outcome="/pages/products.xhtml"/>
+                <p:menuitem value="Clientes" icon="pi pi-users" outcome="/pages/clients.xhtml"/>
 
                 <f:facet name="options">
                     <span class="mr-3">
                         <i class="pi pi-user mr-2"></i>
                         <ui:insert name="nombreUsuario">Usuario</ui:insert>
                     </span>
-                    <p:button value="Salir" icon="pi pi-sign-out" styleClass="p-button-danger p-button-text"/>
+                    <p:button value="Salir" icon="pi pi-sign-out" styleClass="p-button-danger p-button-text" outcome="/pages/login.xhtml"/>
                 </f:facet>
             </p:menubar>
         </h:form>

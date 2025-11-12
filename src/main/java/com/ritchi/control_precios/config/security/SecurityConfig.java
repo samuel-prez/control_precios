@@ -57,6 +57,7 @@ public class SecurityConfig {
             http.authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(mvc.pattern("/pages/login.xhtml")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/jakarta.faces.resource/**")).permitAll()
+                    // .requestMatchers(mvc.pattern("/pages/products.xhtml")).hasAnyAuthority( "ROLE_ADMIN")
                     .anyRequest()
                     .authenticated())
                     .formLogin(formLogin -> formLogin
