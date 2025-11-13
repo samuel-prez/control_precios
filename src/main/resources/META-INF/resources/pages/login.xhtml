@@ -1,36 +1,220 @@
 <!DOCTYPE html>
 <html xmlns:h="jakarta.faces.html"
     xmlns:f="jakarta.faces.core"
-    xmlns:p="primefaces">
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets">
 
     <h:head>
-        <title>Login</title>
+        <title>Control de Precios - Login</title>
         <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta name="mobile-web-app-capable" content="yes"/>
         <h:outputStylesheet library="assets" name="css/primeflex.css"/>
         <h:outputStylesheet library="assets" name="css/primeicons.css"/>
         <h:outputStylesheet library="assets" name="css/stylle.css"/>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                background: linear-gradient(135deg, #0928b3 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            .login-container {
+                width: 100%;
+                max-width: 400px;
+                padding: 20px;
+            }
+
+            .login-card {
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                padding: 50px 40px;
+                animation: slideInUp 0.6s ease-out;
+            }
+
+            .login-header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            .login-header .icon-wrapper {
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 20px;
+                font-size: 40px;
+                color: white;
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            }
+
+            .login-header h1 {
+                font-size: 28px;
+                font-weight: 700;
+                color: #1a1a1a;
+                margin-bottom: 5px;
+            }
+
+            .login-header p {
+                font-size: 14px;
+                color: #888;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-group label {
+                display: block;
+                font-size: 14px;
+                font-weight: 600;
+                color: #1a1a1a;
+                margin-bottom: 8px;
+            }
+
+            .form-group input {
+                width: 100%;
+                padding: 12px 16px;
+                border: 2px solid #e0e0e0;
+                border-radius: 10px;
+                font-size: 14px;
+                transition: all 0.3s ease;
+                font-family: inherit;
+            }
+
+            .form-group input:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .form-group input::placeholder {
+                color: #aaa;
+            }
+
+            .submit-btn {
+                width: 100%;
+                padding: 13px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                border: none !important;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: 600;
+                color: white !important;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 20px;
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            }
+
+            .submit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            }
+
+            .submit-btn:active {
+                transform: translateY(0);
+            }
+
+            .error-message {
+                background: #fee;
+                color: #c33;
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                font-size: 14px;
+                border-left: 4px solid #c33;
+                display: none;
+            }
+
+            .error-message.show {
+                display: block;
+                animation: shake 0.5s ease-in-out;
+            }
+
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+
+            .login-footer {
+                text-align: center;
+                margin-top: 20px;
+                font-size: 12px;
+                color: #888;
+            }
+
+            /* Responsive */
+            @media (max-width: 480px) {
+                .login-card {
+                    padding: 40px 25px;
+                }
+
+                .login-header h1 {
+                    font-size: 24px;
+                }
+
+                .icon-wrapper {
+                    width: 70px !important;
+                    height: 70px !important;
+                    font-size: 35px !important;
+                }
+            }
+        </style>
     </h:head>
 
     <h:body>
-        <div class="px-4 py-8 md:px-6 lg:px-8">
-            <div class="flex align-items-center justify-content-center">
-                <div class="surface-card p-4 shadow-2 border-round w-full lg:w-3 md:w-7">
-                    <div class="text-center mb-5">
-                        <div class="text-900 text-3xl font-medium mb-3 ">Control De Precios</div>
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="icon-wrapper">
+                        <i class="pi pi-user"></i>
+                    </div>
+                    <h1>Control de Precios</h1>
+                    
+                </div>
+
+                <ui:fragment rendered="#{param['error'] eq 'true'}">
+                    <div class="error-message show">
+                        <i class="pi pi-exclamation-circle"></i> Usuario o contraseña incorrectos
+                    </div>
+                </ui:fragment>
+
+                    <form method="POST" action="#{request.contextPath}/login">
+                    <div class="form-group">
+                        <label for="username">
+                            <i class="pi pi-user"></i> Usuario
+                        </label>
+                        <input type="text" id="username" name="username" placeholder="Ingresa tu usuario" required="required"/>
                     </div>
 
-                    <div>
-                        <h:form prependId="false">
-                            <label for="username" class="block text-900 font-medium mb-2">Usuario</label>
-                            <p:inputText id="username" styleClass="w-full mb-3" placeholder="Usuario"/>
-                            <label for="password" class="block text-900 font-medium mb-2">Clave</label>
-                            <p:password id="password" styleClass="w-full mb-3" placeholder="Clave"/>
-                            <p:commandButton id="submit" value="Ingresar" ajax="false" icon="pi pi-user" styleClass="rounded-button ui-button-info w-full"/>
-                        </h:form>
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="pi pi-lock"></i> Contraseña
+                        </label>
+                        <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required="required"/>
                     </div>
-                </div>
+
+                    <button type="submit" class="submit-btn">
+                        <i class="pi pi-sign-in"></i> Ingresar
+                    </button>
+                    </form>
+
+                
             </div>
         </div>
     </h:body>

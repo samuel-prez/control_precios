@@ -8,7 +8,23 @@ body {
     font-weight: normal;
     color: var(--text-color);
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale
-    
+    -moz-osx-font-smoothing: grayscale;
+}
 
+/* Estilos Login*/
+input[type="text"],
+input[type="password"],
+input[type="email"],
+textarea {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    border-color: #011fa5;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }

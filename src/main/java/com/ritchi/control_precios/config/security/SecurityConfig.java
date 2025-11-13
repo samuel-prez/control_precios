@@ -62,10 +62,13 @@ public class SecurityConfig {
                     // -------
                     .anyRequest()
                     .authenticated())
-                    .formLogin(formLogin -> formLogin
-                            .loginPage("/pages/login.xhtml").permitAll()
-                            .failureUrl("/pages/login.xhtml?error=true")
-                            .defaultSuccessUrl("/pages/home.xhtml"))
+            .formLogin(formLogin -> formLogin
+                .loginPage("/pages/login.xhtml").permitAll()
+                .loginProcessingUrl("/login")
+                .usernameParameter("username")
+                .passwordParameter("password")
+                .failureUrl("/pages/login.xhtml?error=true")
+                .defaultSuccessUrl("/pages/home.xhtml", true))
                     .logout(logout -> logout
                             .logoutSuccessUrl("/pages/login.xhtml")
                             .deleteCookies("JSESSIONID"))
