@@ -57,7 +57,9 @@ public class SecurityConfig {
             http.authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(mvc.pattern("/pages/login.xhtml")).permitAll()
                     .requestMatchers(new AntPathRequestMatcher("/jakarta.faces.resource/**")).permitAll()
-                    // .requestMatchers(mvc.pattern("/pages/products.xhtml")).hasAnyAuthority( "ROLE_ADMIN")
+                    // permiso paginas
+                    .requestMatchers(mvc.pattern("/pages/create_users.xhtml")).hasAnyAuthority( "ROLE_ADMIN")
+                    // -------
                     .anyRequest()
                     .authenticated())
                     .formLogin(formLogin -> formLogin
@@ -66,7 +68,8 @@ public class SecurityConfig {
                             .defaultSuccessUrl("/pages/home.xhtml"))
                     .logout(logout -> logout
                             .logoutSuccessUrl("/pages/login.xhtml")
-                            .deleteCookies("JSESSIONID"));
+                            .deleteCookies("JSESSIONID"))
+                    .exceptionHandling(ex -> ex.accessDeniedPage("/pages/403.xhtml"));
             return http.build();
         } catch (Exception ex) {
             throw new BeanCreationException("Wrong spring security configuration", ex);

@@ -20,8 +20,9 @@
         <h:form id="menuForm">
             <p:menubar>
                 <p:menuitem value="Inicio" icon="pi pi-home" outcome="/pages/home.xhtml"/>
-                <p:menuitem value="Productos" icon="pi pi-box"  outcome="/pages/products.xhtml"/>
+                <p:menuitem value="Productos" icon="pi pi-box" outcome="/pages/products.xhtml"/>
                 <p:menuitem value="Clientes" icon="pi pi-users" outcome="/pages/clients.xhtml"/>
+                <p:menuitem value="Nuevo Usuario" icon="pi pi-user-edit" outcome="/pages/create_users.xhtml"/>
 
                 <f:facet name="options">
                     <span class="mr-3">
@@ -32,23 +33,23 @@
                 </f:facet>
             </p:menubar>
         </h:form>
-    <div class="px-4 py-8 md:px-6 lg:px-8">
-        <div class="flex align-items-center justify-content-center">
-            <section class="surface-section px-4 py-5 md:px-6 lg:px-8 w-full">
-                <div class="flex flex-column lg:flex-row gap-3 justify-content-between lg:align-items-center border-primary py-5" style="border-top: 7px solid">
-                    <div class="flex flex-column gap-2">
-                        <div class="flex align-items-center gap-2">
-                            <h1 class="m-0 font-semibold text-900 text-xl line-height-3">
+        <div class="px-4 py-8 md:px-6 lg:px-8">
+            <div class="flex align-items-center justify-content-center">
+                <section class="surface-section px-4 py-5 md:px-6 lg:px-8 w-full">
+                    <div class="flex flex-column lg:flex-row gap-3 justify-content-between lg:align-items-center border-primary py-5" style="border-top: 7px solid">
+                        <div class="flex flex-column gap-2">
+                            <div class="flex align-items-center gap-2">
+                                <h1 class="m-0 font-semibold text-900 text-xl line-height-3">
                                 Bienvenido <ui:insert name="nombreUsuario"/>
-                            </h1>
-                        </div>
-                        <p class="mb-0 mt-0 text-base text-600">
+                                </h1>
+                            </div>
+                            <p class="mb-0 mt-0 text-base text-600">
                             Estas dentro del <ui:insert name="nombrePagina"/>
-                        </p>
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            </div>
         </div>
-    </div>
-</h:body>
+    </h:body>
 </html>
