@@ -1,79 +1,95 @@
 package com.ritchi.control_precios.config.security;
 
-import org.springframework.beans.factory.BeanCreationException;
+import com.ritchi.control_precios.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    // metodo auxiliar para ccrear coincidencias de rutas con MVC
-    @Bean
-    MvcRequestMatcher.Builder mvc(HandlerMappingIntrospector introspector) {
-        return new MvcRequestMatcher.Builder(introspector);
-    }
 
-    // crea los usuarios en memoria
-    @Bean
-    public InMemoryUserDetailsManager userDetailsService() {
-        // Crea un codificador de contraseñas
-        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    private final CustomUserDetailsService userDetailsService;
 
-        // Crea un administrador de detalles de usuario en memoria
-        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-
-        // Crea usuarios manualmente
-        manager.createUser(User.builder()
-                .username("admin")
-                .password(encoder.encode("123")) 
-                .authorities("ROLE_ADMIN") 
-                .build());
-
-        manager.createUser(User.builder()
-                .username("user")
-                .password(encoder.encode("123")) 
-                .authorities("ROLE_USER") 
-                .build());
-
-        // Devuelve el administrador de detalles de usuario con los usuarios definidos
-        return manager;
+    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
-    public SecurityFilterChain configure(HttpSecurity http, MvcRequestMatcher.Builder mvc) {
-        try {
-            http.csrf(AbstractHttpConfigurer::disable);
-            http.authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(mvc.pattern("/pages/login.xhtml")).permitAll()
-                    .requestMatchers(new AntPathRequestMatcher("/jakarta.faces.resource/**")).permitAll()
-                    // permiso paginas
-                    .requestMatchers(mvc.pattern("/pages/create_users.xhtml")).hasAnyAuthority( "ROLE_ADMIN")
-                    // -------
-                    .anyRequest()
-                    .authenticated())
-                    .formLogin(formLogin -> formLogin
-                            .loginPage("/pages/login.xhtml").permitAll()
-                            .failureUrl("/pages/login.xhtml?error=true")
-                            .defaultSuccessUrl("/pages/home.xhtml"))
-                    .logout(logout -> logout
-                            .logoutSuccessUrl("/pages/login.xhtml")
-                            .deleteCookies("JSESSIONID"))
-                    .exceptionHandling(ex -> ex.accessDeniedPage("/pages/403.xhtml"));
-            return http.build();
-        } catch (Exception ex) {
-            throw new BeanCreationException("Wrong spring security configuration", ex);
-        }
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(authz -> authz
+              
+                .requestMatchers(
+                    new AntPathRequestMatcher("/"),
+                    new AntPathRequestMatcher("/index.xhtml"),
+                    new AntPathRequestMatcher("/pages/login.xhtml"),
+                    new AntPathRequestMatcher("/pages/403.xhtml"),
+                    new AntPathRequestMatcher("/pages/404.xhtml"),
+                    new AntPathRequestMatcher("/error"),
+                    new AntPathRequestMatcher("/javax.faces.resource/**"),
+                    new AntPathRequestMatcher("/resources/**"),
+                    new AntPathRequestMatcher("/css/**"),
+                    new AntPathRequestMatcher("/js/**"),
+                    new AntPathRequestMatcher("/images/**"),
+                    new AntPathRequestMatcher("/assets/**")
+                ).permitAll()
+                
+                // Solo ADMIN
+                .requestMatchers(
+                    new AntPathRequestMatcher("/pages/create_users.xhtml")
+                ).hasAuthority("ROLE_ADMIN")
+                
+                // ADMIN y USER
+                .requestMatchers(
+                    new AntPathRequestMatcher("/pages/home.xhtml"),
+                    new AntPathRequestMatcher("/pages/products.xhtml"),
+                    new AntPathRequestMatcher("/pages/clients.xhtml"),
+                    new AntPathRequestMatcher("/pages/cotizaciones.xhtml") 
+                ).hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                
+                // Resto de rutas requieren autenticación
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/pages/login.xhtml")
+                .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/pages/home.xhtml", true)
+                .failureUrl("/pages/login.xhtml?error=true")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/pages/login.xhtml?logout=true")
+                .deleteCookies("JSESSIONID")
+                .invalidateHttpSession(true)
+                .permitAll()
+            )
+            .exceptionHandling(ex -> ex
+                .accessDeniedPage("/pages/403.xhtml")
+            );
+
+        return http.build();
+    }
 }

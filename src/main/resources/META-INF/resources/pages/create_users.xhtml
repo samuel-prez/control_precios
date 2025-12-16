@@ -1,16 +1,121 @@
-<ui:composition
-    xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:h="http://xmlns.jcp.org/jsf/html"
-    xmlns:ui="jakarta.faces.facelets"
-    template="../templates/template.xhtml" 
->
-    <ui:define name="titulo">
-        Creador de Usuarios
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="../templates/template.xhtml">
+    
+    <ui:define name="titulo">Creador de Usuarios</ui:define>
+    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
+    <ui:define name="nombrePagina">Creador de Usuarios</ui:define>
+
+    <!-- Eliminar la sección de bienvenida -->
+    <ui:define name="bienvenida-section">
+        <!-- Vacío para ocultar bienvenida -->
     </ui:define>
-    <ui:define name="nombreUsuario">
-        #{loginMB.username}
+
+    <ui:define name="contenido">
+        
+        <!-- Mensajes globales -->
+        <p:growl id="messages" showDetail="true" life="5000" />
+
+        <!-- Formulario de creación -->
+        <h:form id="formUsuario">
+            <p:panel header="Crear Nuevo Usuario" styleClass="mb-4">
+                
+                <div class="p-fluid">
+                    <div class="p-field mb-3">
+                        <label for="nombre" class="font-bold">Nombre de Usuario *</label>
+                        <p:inputText id="nombre" 
+                                   value="#{usuarioController.nuevoUsuario.nombre}" 
+                                   placeholder="Ingrese el nombre de usuario"
+                                   styleClass="w-full" />
+                    </div>
+
+                    <div class="p-field mb-3">
+                        <label for="email" class="font-bold">Correo Electrónico *</label>
+                        <p:inputText id="email" 
+                                   value="#{usuarioController.nuevoUsuario.email}" 
+                                   placeholder="usuario@empresa.com"
+                                   styleClass="w-full" />
+                    </div>
+
+                    <div class="p-field mb-3">
+                        <label for="password" class="font-bold">Contraseña *</label>
+                        <p:password id="password" 
+                                  value="#{usuarioController.nuevoUsuario.password}" 
+                                  placeholder="Ingrese la contraseña"
+                                  feedback="false"
+                                  toggleMask="true"
+                                  styleClass="w-full" />
+                    </div>
+
+                    <div class="p-field mb-3">
+                        <label for="rol" class="font-bold">Rol *</label>
+                        <p:selectOneMenu id="rol" 
+                                       value="#{usuarioController.rolSeleccionado}"
+                                       styleClass="w-full">
+                            <f:selectItem itemLabel="-- Seleccione un rol --" itemValue="" noSelectionOption="true" />
+                            <f:selectItem itemLabel="👤 Usuario Normal" itemValue="ROLE_USER" />
+                            <f:selectItem itemLabel="👑 Administrador" itemValue="ROLE_ADMIN" />
+                        </p:selectOneMenu>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <p:commandButton value="❌ Cancelar" 
+                                       action="/pages/home.xhtml?faces-redirect=true"
+                                       styleClass="p-button-secondary"
+                                       immediate="true" />
+                        
+                        <p:commandButton value="✅ Crear Usuario" 
+                                       action="#{usuarioController.crearUsuario()}" 
+                                       update="formUsuario, tablaUsuarios, messages"
+                                       styleClass="p-button-success" />
+                    </div>
+                </div>
+                
+            </p:panel>
+        </h:form>
+
+        <!-- Tabla de usuarios existentes -->
+        <p:panel header="Usuarios Existentes" styleClass="mt-4">
+            <h:form id="tablaUsuarios">
+                <p:dataTable value="#{usuarioController.usuarios}" 
+                           var="usuario" 
+                           emptyMessage="No hay usuarios registrados"
+                           paginator="true"
+                           rows="10"
+                           styleClass="p-datatable-striped">
+                    
+                    <p:column headerText="ID" style="width: 80px">
+                        <h:outputText value="#{usuario.idUsuario}" />
+                    </p:column>
+
+                    <p:column headerText="Usuario">
+                        <h:outputText value="#{usuario.nombre}" />
+                    </p:column>
+
+                    <p:column headerText="Email">
+                        <h:outputText value="#{usuario.email}" />
+                    </p:column>
+
+                    <p:column headerText="Rol">
+                        <p:badge value="#{usuario.rol.nombre}" 
+                               severity="#{usuario.rol.nombre eq 'ROLE_ADMIN' ? 'danger' : 'info'}" />
+                    </p:column>
+
+                    <p:column headerText="Fecha Creación">
+                        <h:outputText value="#{usuario.creadoEn}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:panel>
+
     </ui:define>
-    <ui:define name="nombrePagina">
-        Creador de Usuarios
-    </ui:define>
+    
 </ui:composition>
+</html>

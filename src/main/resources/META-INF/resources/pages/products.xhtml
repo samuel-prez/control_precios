@@ -1,13 +1,111 @@
-<ui:composition xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:h="http://xmlns.jcp.org/jsf/html"
-    xmlns:ui="jakarta.faces.facelets" template="../templates/template.xhtml">
-    <ui:define name="titulo">
-        Productos
-    </ui:define>
-    <ui:define name="nombreUsuario">
-        #{loginMB.username}
-    </ui:define>
-    <ui:define name="nombrePagina">
-        Productos
-    </ui:define>
-</ui:composition>
+
+<p:dialog 
+    id="dialogCrear"
+    header="Crear Nuevo Producto" 
+    widgetVar="dialogCrear" 
+    modal="true"
+    width="600"
+    visible="#{productoController.mostrarDialogCrear}">
+    
+    <h:form id="formCrearProducto" enctype="multipart/form-data">
+        <p:growl id="messagesDialog" showDetail="true" />
+        
+        <div class="p-fluid">
+            <div class="p-field mb-3">
+                <label for="codigoEstilo" class="font-bold">
+                    Código Estilo <span class="text-muted">(opcional)</span>
+                </label>
+                <p:inputText 
+                    id="codigoEstilo"
+                    value="#{productoController.nuevoProducto.codigoEstilo}"
+                    placeholder="Ej: EST-001" />
+                <small class="text-muted block mt-1">
+                    ⚠️ Solo uno de los dos códigos es obligatorio
+                </small>
+            </div>
+
+         
+            <div class="p-field mb-3">
+                <label for="codigoPrototipo" class="font-bold">
+                    Código Prototipo <span class="text-muted">(opcional)</span>
+                </label>
+                <p:inputText 
+                    id="codigoPrototipo"
+                    value="#{productoController.nuevoProducto.codigoPrototipo}"
+                    placeholder="Ej: PROT-001" />
+                <small class="text-muted block mt-1">
+                    ℹ️ Si deja ambos vacíos, mostrará error
+                </small>
+            </div>
+
+            <div class="p-field mb-3">
+                <label for="descripcion" class="font-bold">Descripción *</label>
+                <p:inputTextarea 
+                    id="descripcion"
+                    value="#{productoController.nuevoProducto.descripcion}"
+                    rows="3"
+                    placeholder="Descripción del producto" />
+            </div>
+
+            <div class="p-field mb-4">
+                <label class="font-bold">Imagen del Producto (opcional)</label>
+                <small class="block mb-2" style="color: #6c757d;">
+                    📸 La imagen será automáticamente optimizada y comprimida
+                </small>
+                
+              
+                <h:panelGroup rendered="#{productoController.tieneImagen}">
+                    <div class="mb-3" style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                        <img src="#{productoController.imagenBase64}" 
+                             alt="Preview" 
+                             style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
+                        <br/>
+                        <p:commandButton 
+                            value="Eliminar imagen" 
+                            icon="pi pi-trash"
+                            action="#{productoController.limpiarImagen()}"
+                            update="formCrearProducto"
+                            styleClass="p-button-danger p-button-sm mt-3"
+                            type="button" />
+                    </div>
+                </h:panelGroup>
+                
+     
+                <h:panelGroup rendered="#{!productoController.tieneImagen}">
+                    <p:fileUpload 
+                        mode="advanced"
+                        listener="#{productoController.handleFileUpload}"
+                        update="formCrearProducto, messagesDialog"
+                        auto="true"
+                        dragDropSupport="true"
+                        accept="image/*"
+                        label="Seleccionar imagen"
+                        uploadLabel="Subir"
+                        cancelLabel="Cancelar"
+                        chooseIcon="pi pi-upload"
+                        styleClass="w-full" />
+                    <small class="text-muted block mt-2">
+                        ✅ Formatos: JPG, PNG, GIF | 📦 Tamaño máx: 10MB | 🔧 Compresión automática
+                    </small>
+                </h:panelGroup>
+            </div>
+
+            <div class="flex gap-2 justify-content-end mt-4">
+                <p:commandButton 
+                    value="Cancelar" 
+                    icon="pi pi-times"
+                    onclick="PF('dialogCrear').hide()"
+                    styleClass="p-button-secondary"
+                    type="button" />
+                
+                <p:commandButton 
+                    value="Crear Producto" 
+                    icon="pi pi-check"
+                    action="#{productoController.crearProducto()}"
+                    update="formProductos, messagesDialog, :formProductos:messages"
+                    oncomplete="if (args.validationFailed) return; PF('dialogCrear').hide();"
+                    styleClass="p-button-success" />
+            </div>
+        </div>
+    </h:form>
+</p:dialog>

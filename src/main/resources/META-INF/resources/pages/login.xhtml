@@ -1,37 +1,177 @@
 <!DOCTYPE html>
-<html xmlns:h="jakarta.faces.html"
-    xmlns:f="jakarta.faces.core"
-    xmlns:p="primefaces">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets">
 
+<f:view>
     <h:head>
-        <title>Login</title>
-        <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+        <title>Control de Precios - Login</title>
+        <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <meta name="mobile-web-app-capable" content="yes"/>
-        <h:outputStylesheet library="assets" name="css/primeflex.css"/>
-        <h:outputStylesheet library="assets" name="css/primeicons.css"/>
-        <h:outputStylesheet library="assets" name="css/stylle.css"/>
+        
+        <h:outputStylesheet library="css" name="login.css"/>
+        
+        <style>
+            .login-container {
+                min-height: 100vh;
+                background: linear-gradient(135deg, #0d32d8 0%, #764ba2 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            
+            .login-card {
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+                padding: 40px;
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .login-logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            
+            .login-icon {
+                font-size: 3rem;
+                color: #667eea;
+                margin-bottom: 15px;
+            }
+            
+            .login-title {
+                color: #333;
+                font-size: 1.8rem;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            
+            .login-subtitle {
+                color: #666;
+                font-size: 0.9rem;
+            }
+            
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            .form-label {
+                display: block;
+                margin-bottom: 8px;
+                color: #333;
+                font-weight: 500;
+            }
+            
+            .form-input {
+                width: 100%;
+                padding: 12px 15px;
+                border: 2px solid #e1e5e9;
+                border-radius: 8px;
+                font-size: 14px;
+                transition: border-color 0.3s;
+            }
+            
+            .form-input:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+            
+            .login-button {
+                width: 100%;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: transform 0.2s;
+            }
+            
+            .login-button:hover {
+                transform: translateY(-2px);
+            }
+            
+            .error-message {
+                background: #fee;
+                border: 1px solid #f5c6cb;
+                color: #721c24;
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .footer {
+                text-align: center;
+                margin-top: 20px;
+                color: #666;
+                font-size: 0.8rem;
+            }
+        </style>
     </h:head>
 
     <h:body>
-        <div class="px-4 py-8 md:px-6 lg:px-8">
-            <div class="flex align-items-center justify-content-center">
-                <div class="surface-card p-4 shadow-2 border-round w-full lg:w-3 md:w-7">
-                    <div class="text-center mb-5">
-                        <div class="text-900 text-3xl font-medium mb-3 ">Control De Precios</div>
+        <div class="login-container">
+            <div class="login-card">
+                <!-- Logo y Título -->
+                <div class="login-logo">
+                    <div class="login-icon">
+                        <i class="pi pi-users"></i>
+                    </div>
+                    <div class="login-title">Control de Precios</div>
+                    <div class="login-subtitle">Sistema de Gestión de Precios</div>
+                </div>
+
+                <!-- Mensaje de Error -->
+                <ui:fragment rendered="#{param['error'] eq 'true'}">
+                    <div class="error-message">
+                        <i class="pi pi-exclamation-triangle"></i>
+                        Usuario o contraseña incorrectos
+                    </div>
+                </ui:fragment>
+
+                <!-- Formulario de Login -->
+                <form method="POST" action="#{request.contextPath}/login">
+                    <div class="form-group">
+                        <label class="form-label" for="username">
+                            <i class="pi pi-user"></i> Usuario
+                        </label>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               class="form-input" 
+                               placeholder="Ingresa tu usuario" 
+                               required="required" />
                     </div>
 
-                    <div>
-                        <h:form prependId="false">
-                            <label for="username" class="block text-900 font-medium mb-2">Usuario</label>
-                            <p:inputText id="username" styleClass="w-full mb-3" placeholder="Usuario"/>
-                            <label for="password" class="block text-900 font-medium mb-2">Clave</label>
-                            <p:password id="password" styleClass="w-full mb-3" placeholder="Clave"/>
-                            <p:commandButton id="submit" value="Ingresar" ajax="false" icon="pi pi-user" styleClass="rounded-button ui-button-info w-full"/>
-                        </h:form>
+                    <div class="form-group">
+                        <label class="form-label" for="password">
+                            <i class="pi pi-lock"></i> Contraseña
+                        </label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               class="form-input" 
+                               placeholder="Ingresa tu contraseña" 
+                               required="required" />
                     </div>
+
+                    <button type="submit" class="login-button">
+                        <i class="pi pi-sign-in"></i> Iniciar Sesión
+                    </button>
+                </form>
+
+                <!-- Footer -->
+                <div class="footer">
+                    <p>© 2025 Control de Precios - Todos los derechos reservados</p>
                 </div>
             </div>
         </div>
     </h:body>
+</f:view>
 </html>

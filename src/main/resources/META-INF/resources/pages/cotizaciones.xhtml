@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="../templates/template.xhtml">
+    
+    <ui:define name="titulo">Cotizaciones</ui:define>
+    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
+    <ui:define name="nombrePagina">Gestión de Solicitudes de Precios</ui:define>
+
+    <ui:define name="bienvenida-section">
+        <!-- Vacío -->
+    </ui:define>
+
+    <ui:define name="contenido">
+        
+        <p:growl id="messages" showDetail="true" life="5000" />
+
+        <h:form id="formCotizaciones">
+            
+            <!-- PASO 1: Seleccionar Cliente -->
+            <p:panel rendered="#{cotizacionController.clienteSeleccionado == null}">
+                <f:facet name="header">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-user mr-2"></i>
+                        <span class="font-bold">Paso 1: Seleccione el Cliente</span>
+                    </div>
+                </f:facet>
+
+                <p:dataTable 
+                    value="#{cotizacionController.todosClientes}" 
+                    var="cliente"
+                    selectionMode="single"
+                    selection="#{cotizacionController.clienteSeleccionado}"
+                    rowKey="#{cliente.idCliente}"
+                    paginator="true"
+                    rows="10"
+                    filterDisplay="row"
+                    styleClass="p-datatable-striped">
+                    
+                    <p:column headerText="Tipo" filterBy="#{cliente.clienteTipo.nombre}" filterMatchMode="contains">
+                        <p:badge value="#{cliente.clienteTipo.nombre}" severity="info" />
+                    </p:column>
+
+                    <p:column headerText="Cliente" filterBy="#{cliente.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{cliente.nombre}" styleClass="font-bold" />
+                    </p:column>
+
+                    <p:column headerText="Correo">
+                        <h:outputText value="#{cliente.correo}" />
+                    </p:column>
+
+                    <p:column headerText="Acción" style="width: 150px">
+                        <p:commandButton 
+                            value="Seleccionar" 
+                            icon="pi pi-check"
+                            action="#{cotizacionController.seleccionarCliente(cliente)}"
+                            update="formCotizaciones"
+                            styleClass="p-button-success p-button-sm" />
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+
+            <!-- PASO 2: Buscar Producto y Crear Cotización -->
+            <p:panel rendered="#{cotizacionController.clienteSeleccionado != null and cotizacionController.mostrarFormulario}">
+                <f:facet name="header">
+                    <div class="flex align-items-center justify-content-between">
+                        <div class="flex align-items-center">
+                            <i class="pi pi-file-edit mr-2"></i>
+                            <span class="font-bold">Paso 2: Nueva Cotización para #{cotizacionController.clienteSeleccionado.nombre}</span>
+                        </div>
+                        <p:commandButton 
+                            value="Cambiar Cliente" 
+                            icon="pi pi-arrow-left"
+                            action="#{cotizacionController.cambiarCliente()}"
+                            update="formCotizaciones"
+                            styleClass="p-button-secondary p-button-sm" />
+                    </div>
+                </f:facet>
+
+                <div class="grid">
+                    <!-- Panel Izquierdo: Buscar Producto -->
+                    <div class="col-12 md:col-6">
+                        <p:panel header="Buscar Producto">
+                            <div class="p-fluid">
+                                <div class="p-field mb-3">
+                                    <label for="codigoBusqueda" class="font-bold">
+                                        Código Estilo o Prototipo *
+                                    </label>
+                                    <div class="p-inputgroup">
+                                        <p:inputText 
+                                            id="codigoBusqueda"
+                                            value="#{cotizacionController.codigoBusqueda}"
+                                            placeholder="Ej: 2006, P-3236"
+                                            onkeypress="if(event.keyCode == 13) { return false; }" />
+                                        <p:commandButton 
+                                            icon="pi pi-search" 
+                                            action="#{cotizacionController.buscarProducto()}"
+                                            update="formCotizaciones, messages"
+                                            styleClass="p-button-primary" />
+                                    </div>
+                                </div>
+
+                                <!-- Resultado de búsqueda -->
+                                <h:panelGroup rendered="#{cotizacionController.productoEncontrado != null}">
+                                    <p:panel header="Producto Encontrado" styleClass="mt-3">
+                                        <div class="text-center mb-3">
+                                            <h:panelGroup rendered="#{cotizacionController.productoEncontrado.imagenProducto != null}">
+                                                <img src="#{cotizacionController.productoEncontrado.imagenProducto}" 
+                                                     alt="Producto" 
+                                                     style="max-width: 100%; max-height: 250px; border-radius: 8px;" />
+                                            </h:panelGroup>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <strong>Código Estilo:</strong> 
+                                            <p:badge value="#{cotizacionController.productoEncontrado.codigoEstilo}" 
+                                                    severity="success" />
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Código Prototipo:</strong> 
+                                            #{cotizacionController.productoEncontrado.codigoPrototipo}
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong>Descripción:</strong> 
+                                            #{cotizacionController.productoEncontrado.descripcion}
+                                        </div>
+                                        
+                                        <!-- Seleccionar Color -->
+                                        <div class="mt-3">
+                                            <label class="font-bold">Color disponible *</label>
+                                            <p:selectOneMenu 
+                                                value="#{cotizacionController.colorSeleccionado}"
+                                                styleClass="w-full mt-2">
+                                                <f:selectItem itemLabel="-- Seleccione color --" itemValue="" />
+                                                <f:selectItems 
+                                                    value="#{cotizacionController.coloresDisponibles}" 
+                                                    var="color"
+                                                    itemLabel="#{color.color}"
+                                                    itemValue="#{color.idProductoColor}" />
+                                            </p:selectOneMenu>
+                                        </div>
+                                    </p:panel>
+                                </h:panelGroup>
+                            </div>
+                        </p:panel>
+                    </div>
+
+                    <!-- Panel Derecho: Datos de Cotización -->
+                    <div class="col-12 md:col-6">
+                        <p:panel header="Datos de la Cotización">
+                            <div class="p-fluid">
+                                <div class="p-field mb-3">
+                                    <label for="estiloCliente" class="font-bold">
+                                        Nombre del Cliente para el Producto
+                                    </label>
+                                    <p:inputText 
+                                        id="estiloCliente"
+                                        value="#{cotizacionController.nuevaCotizacion.estiloCliente}"
+                                        placeholder="Cómo lo conoce el cliente" />
+                                </div>
+
+                                <div class="p-field mb-3">
+                                    <label for="valorInicial" class="font-bold">Valor Inicial *</label>
+                                    <p:inputNumber 
+                                        id="valorInicial"
+                                        value="#{cotizacionController.nuevaCotizacion.valorInicial}"
+                                        mode="currency"
+                                        currency="USD"
+                                        locale="en-US"
+                                        placeholder="0.00" />
+                                </div>
+
+                                <div class="p-field mb-3">
+                                    <label for="valorFinal" class="font-bold">Valor Final</label>
+                                    <p:inputNumber 
+                                        id="valorFinal"
+                                        value="#{cotizacionController.nuevaCotizacion.valorFinal}"
+                                        mode="currency"
+                                        currency="USD"
+                                        locale="en-US"
+                                        placeholder="0.00" />
+                                </div>
+
+                                <div class="p-field mb-3">
+                                    <label for="observaciones" class="font-bold">Observaciones</label>
+                                    <p:inputTextarea 
+                                        id="observaciones"
+                                        value="#{cotizacionController.nuevaCotizacion.observaciones}"
+                                        rows="3"
+                                        placeholder="Notas adicionales..." />
+                                </div>
+
+                                <div class="flex gap-2 mt-4">
+                                    <p:commandButton 
+                                        value="Limpiar" 
+                                        icon="pi pi-refresh"
+                                        action="#{cotizacionController.limpiarFormulario()}"
+                                        update="formCotizaciones"
+                                        styleClass="p-button-secondary flex-1" />
+                                    
+                                    <p:commandButton 
+                                        value="Crear Cotización" 
+                                        icon="pi pi-check"
+                                        action="#{cotizacionController.crearCotizacion()}"
+                                        update="formCotizaciones, messages"
+                                        styleClass="p-button-success flex-1" />
+                                </div>
+                            </div>
+                        </p:panel>
+                    </div>
+                </div>
+            </p:panel>
+
+            <!-- PASO 3: Ver Cotizaciones del Cliente -->
+            <p:panel rendered="#{cotizacionController.clienteSeleccionado != null}" 
+                    styleClass="mt-4">
+                <f:facet name="header">
+                    <div class="flex align-items-center justify-content-between">
+                        <div class="flex align-items-center">
+                            <i class="pi pi-list mr-2"></i>
+                            <span class="font-bold">Cotizaciones de #{cotizacionController.clienteSeleccionado.nombre}</span>
+                        </div>
+                        <p:commandButton 
+                            value="Nueva Cotización" 
+                            icon="pi pi-plus"
+                            action="#{cotizacionController.nuevaCotizacionBtn()}"
+                            update="formCotizaciones"
+                            styleClass="p-button-success p-button-sm"
+                            rendered="#{!cotizacionController.mostrarFormulario}" />
+                    </div>
+                </f:facet>
+
+                <p:dataTable 
+                    value="#{cotizacionController.cotizacionesCliente}" 
+                    var="cotiz"
+                    emptyMessage="No hay cotizaciones registradas"
+                    paginator="true"
+                    rows="10"
+                    styleClass="p-datatable-sm">
+                    
+                    <p:column headerText="ID" style="width: 60px">
+                        <h:outputText value="#{cotiz.idPrecioLinea}" />
+                    </p:column>
+
+                    <p:column headerText="Fecha Solicitud">
+                        <h:outputText value="#{cotiz.fechaSolicitud}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Producto">
+                        <div>
+                            <strong>#{cotiz.productoColor.producto.codigoEstilo}</strong>
+                            <br/>
+                            <small class="text-600">#{cotiz.productoColor.producto.descripcion}</small>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Color">
+                        <p:badge value="#{cotiz.productoColor.color}" severity="success" />
+                    </p:column>
+
+                    <p:column headerText="Valor Inicial">
+                        <h:outputText value="#{cotiz.valorInicial}">
+                            <f:convertNumber type="currency" currencySymbol="$" />
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Estado">
+                        <p:badge 
+                            value="#{cotiz.estado ? 'APROBADO' : 'PENDIENTE'}" 
+                            severity="#{cotiz.estado ? 'success' : 'warning'}" />
+                    </p:column>
+
+                    <p:column headerText="Usuario">
+                        <h:outputText value="#{cotiz.usuario.nombre}" />
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+
+        </h:form>
+
+    </ui:define>
+    
+</ui:composition>
+</html>

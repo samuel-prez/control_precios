@@ -1,16 +1,171 @@
-<ui:composition
-    xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:h="http://xmlns.jcp.org/jsf/html"
-    xmlns:ui="jakarta.faces.facelets"
-    template="../templates/template.xhtml" 
->
-    <ui:define name="titulo">
-        Clientes
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="../templates/template.xhtml">
+    
+    <ui:define name="titulo">Clientes</ui:define>
+    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
+    <ui:define name="nombrePagina">Gestión de Clientes</ui:define>
+
+    <ui:define name="bienvenida-section">
+        <!-- Vacío para ocultar bienvenida -->
     </ui:define>
-    <ui:define name="nombreUsuario">
-        #{loginMB.username}
+
+    <ui:define name="contenido">
+        
+        <p:growl id="messages" showDetail="true" life="5000" />
+
+        <h:form id="formClientes">
+            
+            <!-- Vista: Selección de Tipo de Cliente -->
+            <p:panel rendered="#{clienteController.tipoSeleccionado == null}">
+                <f:facet name="header">
+                    <div class="flex align-items-center">
+                        <i class="pi pi-users mr-2"></i>
+                        <span class="font-bold">Seleccione el Tipo de Cliente</span>
+                    </div>
+                </f:facet>
+
+                <div class="grid">
+                    <ui:repeat value="#{clienteController.tiposCliente}" var="tipo">
+                        <div class="col-12 md:col-6">
+                            <p:commandButton 
+                                value="#{tipo.nombre}" 
+                                icon="pi pi-folder-open"
+                                action="#{clienteController.seleccionarTipo(tipo)}"
+                                update="formClientes"
+                                styleClass="w-full p-button-lg p-button-outlined"
+                                style="height: 150px; font-size: 1.5rem;" />
+                        </div>
+                    </ui:repeat>
+                </div>
+            </p:panel>
+
+            <!-- Vista: Lista de Clientes del Tipo Seleccionado -->
+            <p:panel rendered="#{clienteController.tipoSeleccionado != null}">
+                <f:facet name="header">
+                    <div class="flex align-items-center justify-content-between">
+                        <div class="flex align-items-center">
+                            <i class="pi pi-list mr-2"></i>
+                            <span class="font-bold">Clientes - #{clienteController.tipoSeleccionado.nombre}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <p:commandButton 
+                                value="Nuevo Cliente" 
+                                icon="pi pi-plus"
+                                action="#{clienteController.abrirDialogCrear()}"
+                                update="dialogCrear"
+                                oncomplete="PF('dialogCrear').show()"
+                                styleClass="p-button-success" />
+                            
+                            <p:commandButton 
+                                value="Volver" 
+                                icon="pi pi-arrow-left"
+                                action="#{clienteController.volverATipos()}"
+                                update="formClientes"
+                                styleClass="p-button-secondary" />
+                        </div>
+                    </div>
+                </f:facet>
+
+                <p:dataTable 
+                    value="#{clienteController.clientesFiltrados}" 
+                    var="cliente"
+                    emptyMessage="No hay clientes registrados para este tipo"
+                    paginator="true"
+                    rows="10"
+                    styleClass="p-datatable-striped">
+                    
+                    <p:column headerText="ID" style="width: 80px">
+                        <h:outputText value="#{cliente.idCliente}" />
+                    </p:column>
+
+                    <p:column headerText="Nombre" sortBy="#{cliente.nombre}">
+                        <h:outputText value="#{cliente.nombre}" />
+                    </p:column>
+
+                    <p:column headerText="Correo" sortBy="#{cliente.correo}">
+                        <h:outputText value="#{cliente.correo}" />
+                    </p:column>
+
+                    <p:column headerText="Tipo">
+                        <p:badge value="#{cliente.clienteTipo.nombre}" severity="info" />
+                    </p:column>
+
+                    <p:column headerText="Fecha Creación">
+                        <h:outputText value="#{cliente.creadoEn}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+
+        </h:form>
+
+        <!-- Dialog para Crear Cliente -->
+        <p:dialog 
+            id="dialogCrear"
+            header="Crear Nuevo Cliente" 
+            widgetVar="dialogCrear" 
+            modal="true"
+            width="500"
+            visible="#{clienteController.mostrarDialogCrear}">
+            
+            <h:form id="formCrearCliente">
+                <p:growl id="messagesDialog" showDetail="true" />
+                
+                <div class="p-fluid">
+                    <div class="p-field mb-3">
+                        <label for="nombre" class="font-bold">Nombre del Cliente *</label>
+                        <p:inputText 
+                            id="nombre"
+                            value="#{clienteController.nuevoCliente.nombre}"
+                            placeholder="Ingrese el nombre del cliente"
+                            required="true" />
+                    </div>
+
+                    <div class="p-field mb-3">
+                        <label for="correo" class="font-bold">Correo Electrónico *</label>
+                        <p:inputText 
+                            id="correo"
+                            value="#{clienteController.nuevoCliente.correo}"
+                            placeholder="cliente@empresa.com"
+                            required="true" />
+                    </div>
+
+                    <div class="p-field mb-4">
+                        <label class="font-bold">Tipo de Cliente</label>
+                        <p:badge 
+                            value="#{clienteController.tipoSeleccionado.nombre}" 
+                            severity="success"
+                            styleClass="text-xl" />
+                    </div>
+
+                    <div class="flex gap-2 justify-content-end mt-4">
+                        <p:commandButton 
+                            value="Cancelar" 
+                            icon="pi pi-times"
+                            onclick="PF('dialogCrear').hide()"
+                            styleClass="p-button-secondary"
+                            type="button" />
+                        
+                        <p:commandButton 
+                            value="Crear" 
+                            icon="pi pi-check"
+                            action="#{clienteController.crearCliente()}"
+                            update="formClientes, messagesDialog, :formClientes:messages"
+                            oncomplete="if (args.validationFailed) return; PF('dialogCrear').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
     </ui:define>
-    <ui:define name="nombrePagina">
-        Clientes
-    </ui:define>
+    
 </ui:composition>
+</html>

@@ -5,9 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class ControlPreciosApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(ControlPreciosApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(ControlPreciosApplication.class, args);
+    }
 }
