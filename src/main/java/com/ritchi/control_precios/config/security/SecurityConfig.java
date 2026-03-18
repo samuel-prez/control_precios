@@ -11,16 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Configuración central de Spring Security.
- *
- * <p>Define tres aspectos principales:</p>
- * <ul>
- *   <li><b>Autenticación:</b> cómo se verifica la identidad (BCrypt + base de datos)</li>
- *   <li><b>Autorización:</b> qué URLs puede acceder cada rol</li>
- *   <li><b>Sesión:</b> comportamiento de login / logout</li>
- * </ul>
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -31,22 +21,11 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
-    /**
-     * Codificador de contraseñas BCrypt (factor de coste por defecto: 10).
-     * Se usa al crear usuarios y al verificar credenciales en el login.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Proveedor de autenticación que combina:
-     * <ul>
-     *   <li>{@link CustomUserDetailsService} – carga el usuario desde la BD</li>
-     *   <li>{@link BCryptPasswordEncoder} – verifica la contraseña hasheada</li>
-     * </ul>
-     */
     @Bean
     public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -55,20 +34,6 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    /**
-     * Cadena de filtros de seguridad HTTP.
-     *
-     * <p>Orden de reglas (el primero que coincide gana):</p>
-     * <ol>
-     *   <li>Recursos públicos → {@code permitAll}</li>
-     *   <li>Páginas de solo ADMIN → {@code hasAuthority("ROLE_ADMIN")}</li>
-     *   <li>Páginas compartidas → {@code hasAnyAuthority(...)}</li>
-     *   <li>Todo lo demás → debe estar autenticado</li>
-     * </ol>
-     *
-     * <p><b>CSRF desactivado</b> porque JSF maneja su propia protección CSRF;
-     * activar ambas causaría conflictos de tokens.</p>
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
