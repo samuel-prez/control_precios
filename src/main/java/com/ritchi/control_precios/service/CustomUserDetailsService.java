@@ -43,7 +43,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     private Collection<? extends GrantedAuthority> getAuthorities(Usuario usuario) {
         if (usuario.getRol() != null && usuario.getRol().getNombre() != null) {
             String roleName = usuario.getRol().getNombre();
-            // Asegurar que el rol tenga el formato correcto
             if (!roleName.startsWith("ROLE_")) {
                 roleName = "ROLE_" + roleName;
             }

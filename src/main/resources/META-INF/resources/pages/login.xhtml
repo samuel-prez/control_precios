@@ -9,167 +9,203 @@
         <title>Control de Precios - Login</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        
-        <h:outputStylesheet library="css" name="login.css"/>
-        
+
         <style>
-            .login-container {
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
                 min-height: 100vh;
-                background: linear-gradient(135deg, #0d32d8 0%, #764ba2 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 padding: 20px;
             }
-            
-            .login-card {
+
+            .login-container {
                 background: white;
-                border-radius: 15px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-                padding: 40px;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+                padding: 48px 40px;
                 width: 100%;
-                max-width: 400px;
+                max-width: 420px;
             }
-            
+
             .login-logo {
                 text-align: center;
-                margin-bottom: 30px;
+                margin-bottom: 36px;
             }
-            
+
             .login-icon {
-                font-size: 3rem;
-                color: #667eea;
-                margin-bottom: 15px;
+                font-size: 3.5rem;
+                color: #3b82f6;
+                margin-bottom: 16px;
             }
-            
+
             .login-title {
-                color: #333;
-                font-size: 1.8rem;
-                font-weight: bold;
-                margin-bottom: 5px;
+                color: #2d3748;
+                font-size: 1.875rem;
+                font-weight: 700;
+                margin-bottom: 6px;
+                letter-spacing: -0.5px;
             }
-            
+
             .login-subtitle {
-                color: #666;
-                font-size: 0.9rem;
+                color: #718096;
+                font-size: 0.9375rem;
+                font-weight: 400;
             }
-            
+
             .form-group {
-                margin-bottom: 20px;
+                margin-bottom: 24px;
             }
-            
+
             .form-label {
                 display: block;
                 margin-bottom: 8px;
-                color: #333;
+                color: #4a5568;
                 font-weight: 500;
+                font-size: 0.875rem;
             }
-            
+
             .form-input {
                 width: 100%;
-                padding: 12px 15px;
-                border: 2px solid #e1e5e9;
-                border-radius: 8px;
-                font-size: 14px;
-                transition: border-color 0.3s;
+                padding: 13px 16px;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 10px;
+                font-size: 15px;
+                transition: all 0.2s ease;
+                background: #f7fafc;
+                color: #2d3748;
             }
-            
+
             .form-input:focus {
                 outline: none;
-                border-color: #667eea;
+                border-color: #3b82f6;
+                background: white;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             }
-            
+
+            .form-input::placeholder {
+                color: #a0aec0;
+            }
+
             .login-button {
                 width: 100%;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
                 color: white;
                 border: none;
-                padding: 12px;
-                border-radius: 8px;
+                padding: 14px 20px;
+                border-radius: 10px;
                 font-size: 16px;
-                font-weight: bold;
+                font-weight: 600;
                 cursor: pointer;
-                transition: transform 0.2s;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+                margin-top: 8px;
             }
-            
+
             .login-button:hover {
                 transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
             }
-            
+
+            .login-button:active {
+                transform: translateY(0);
+            }
+
             .error-message {
-                background: #fee;
-                border: 1px solid #f5c6cb;
-                color: #721c24;
-                padding: 10px;
-                border-radius: 5px;
-                margin-bottom: 20px;
-                text-align: center;
+                background: #fff5f5;
+                border-left: 4px solid #fc8181;
+                color: #c53030;
+                padding: 14px 16px;
+                border-radius: 8px;
+                margin-bottom: 24px;
+                font-size: 0.875rem;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
-            
+
+            .error-icon {
+                font-size: 1.25rem;
+                color: #fc8181;
+            }
+
             .footer {
                 text-align: center;
-                margin-top: 20px;
-                color: #666;
-                font-size: 0.8rem;
+                margin-top: 28px;
+                padding-top: 24px;
+                border-top: 1px solid #e2e8f0;
+                color: #a0aec0;
+                font-size: 0.8125rem;
+            }
+
+            @media (max-width: 480px) {
+                .login-container {
+                    padding: 36px 28px;
+                }
             }
         </style>
     </h:head>
 
     <h:body>
         <div class="login-container">
-            <div class="login-card">
-                <!-- Logo y Título -->
-                <div class="login-logo">
-                    <div class="login-icon">
-                        <i class="pi pi-users"></i>
-                    </div>
-                    <div class="login-title">Control de Precios</div>
-                    <div class="login-subtitle">Sistema de Gestión de Precios</div>
+            <!-- Logo y Título -->
+            <div class="login-logo">
+                <div class="login-icon">
+                    <i class="pi pi-dollar"></i>
+                </div>
+                <div class="login-title">Control de Precios</div>
+            </div>
+
+            <!-- Mensaje de Error -->
+            <ui:fragment rendered="#{param['error'] eq 'true'}">
+                <div class="error-message">
+                    <span class="error-icon">⚠</span>
+                    <span>Usuario o contraseña incorrectos</span>
+                </div>
+            </ui:fragment>
+
+            <!-- Formulario de Login -->
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label class="form-label" for="username">
+                        <i class="pi pi-user"></i> Usuario
+                    </label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="form-input"
+                           required="required"
+                           autofocus="autofocus" />
                 </div>
 
-                <!-- Mensaje de Error -->
-                <ui:fragment rendered="#{param['error'] eq 'true'}">
-                    <div class="error-message">
-                        <i class="pi pi-exclamation-triangle"></i>
-                        Usuario o contraseña incorrectos
-                    </div>
-                </ui:fragment>
-
-                <!-- Formulario de Login -->
-                <form method="POST" action="#{request.contextPath}/login">
-                    <div class="form-group">
-                        <label class="form-label" for="username">
-                            <i class="pi pi-user"></i> Usuario
-                        </label>
-                        <input type="text" 
-                               id="username" 
-                               name="username" 
-                               class="form-input" 
-                               placeholder="Ingresa tu usuario" 
-                               required="required" />
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="password">
-                            <i class="pi pi-lock"></i> Contraseña
-                        </label>
-                        <input type="password" 
-                               id="password" 
-                               name="password" 
-                               class="form-input" 
-                               placeholder="Ingresa tu contraseña" 
-                               required="required" />
-                    </div>
-
-                    <button type="submit" class="login-button">
-                        <i class="pi pi-sign-in"></i> Iniciar Sesión
-                    </button>
-                </form>
-
-                <!-- Footer -->
-                <div class="footer">
-                    <p>© 2025 Control de Precios - Todos los derechos reservados</p>
+                <div class="form-group">
+                    <label class="form-label" for="password">
+                        <i class="pi pi-lock"></i> Contraseña
+                    </label>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           class="form-input"
+                           required="required" />
                 </div>
+
+                <button type="submit" class="login-button">
+                    <i class="pi pi-sign-in"></i> Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p>¿Necesitas acceso? Solicita una cuenta al área de sistemas</p>
             </div>
         </div>
     </h:body>

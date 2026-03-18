@@ -3,125 +3,153 @@ package com.ritchi.control_precios.controller;
 import com.ritchi.control_precios.model.entity.Cliente;
 import com.ritchi.control_precios.model.entity.ClienteTipo;
 import com.ritchi.control_precios.service.ClienteService;
-import jakarta.annotation.PostConstruct;
+import com.ritchi.control_precios.service.ClienteTipoService;
+import org.springframework.stereotype.Component;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.ExternalContext;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+import jakarta.annotation.PostConstruct;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
-@Named(value = "clienteController")
+@Named("clienteController")
 @ViewScoped
+@Component
 public class ClienteController implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Inject
-    private ClienteService clienteService;
+    private final ClienteService clienteService;
+    private final ClienteTipoService clienteTipoService;
 
     private List<ClienteTipo> tiposCliente;
-    private ClienteTipo tipoSeleccionado;
     private List<Cliente> clientesFiltrados;
-    
-    // Para crear nuevo cliente
+    private ClienteTipo tipoSeleccionado;
+    private Cliente clienteSeleccionado;
     private Cliente nuevoCliente;
-    private boolean mostrarDialogCrear;
+
+    public ClienteController(ClienteService clienteService, ClienteTipoService clienteTipoService) {
+        this.clienteService = clienteService;
+        this.clienteTipoService = clienteTipoService;
+    }
 
     @PostConstruct
     public void init() {
-        System.out.println("🔷 ClienteController inicializado");
-        tiposCliente = clienteService.obtenerTodosTipos();
+        cargarTiposCliente();
+        clientesFiltrados = new ArrayList<>();
         nuevoCliente = new Cliente();
-        mostrarDialogCrear = false;
     }
 
-    public void seleccionarTipo(ClienteTipo tipo) {
-        System.out.println("Tipo seleccionado: " + tipo.getNombre());
-        this.tipoSeleccionado = tipo;
-        cargarClientesPorTipo();
-    }
-
-    private void cargarClientesPorTipo() {
-        if (tipoSeleccionado != null) {
-            clientesFiltrados = clienteService.obtenerClientesPorTipo(tipoSeleccionado.getIdClienteTipo());
-            System.out.println("✅ Clientes cargados: " + clientesFiltrados.size());
+    private void cargarTiposCliente() {
+        try {
+            tiposCliente = clienteTipoService.obtenerTodosTipos();
+        } catch (Exception e) {
+            tiposCliente = new ArrayList<>();
         }
     }
 
-    public void abrirDialogCrear() {
+    public void seleccionarTipoPorNombre(String nombreTipo) {
+        try {
+            ClienteTipo tipo = clienteTipoService.obtenerPorNombre(nombreTipo);
+            if (tipo != null) {
+                seleccionarTipo(tipo);
+            }
+        } catch (Exception e) {
+            // ignorado
+        }
+    }
+
+    public void seleccionarTipo(ClienteTipo tipo) {
+        this.tipoSeleccionado = tipo;
+        cargarClientesPorTipo(tipo.getIdClienteTipo());
         nuevoCliente = new Cliente();
-        mostrarDialogCrear = true;
+    }
+
+    private void cargarClientesPorTipo(Integer idTipo) {
+        try {
+            clientesFiltrados = clienteService.obtenerClientesPorTipo(idTipo);
+        } catch (Exception e) {
+            clientesFiltrados = new ArrayList<>();
+        }
     }
 
     public void crearCliente() {
-        System.out.println("\n🔷 ===== INICIO CREAR CLIENTE =====");
-        System.out.println("Nombre: " + nuevoCliente.getNombre());
-        System.out.println(" Correo: " + nuevoCliente.getCorreo());
-        System.out.println(" Tipo: " + (tipoSeleccionado != null ? tipoSeleccionado.getNombre() : "null"));
-
         try {
-            // Validaciones
             if (nuevoCliente.getNombre() == null || nuevoCliente.getNombre().trim().isEmpty()) {
                 mostrarError("El nombre del cliente es obligatorio");
                 return;
             }
 
-            if (nuevoCliente.getCorreo() == null || nuevoCliente.getCorreo().trim().isEmpty()) {
-                mostrarError("El correo electrónico es obligatorio");
-                return;
+            if (nuevoCliente.getCorreo() != null && !nuevoCliente.getCorreo().trim().isEmpty()) {
+                if (!nuevoCliente.getCorreo().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                    mostrarError("El formato del correo electrónico no es válido");
+                    return;
+                }
             }
 
-            if (tipoSeleccionado == null) {
-                mostrarError("Debe seleccionar un tipo de cliente");
-                return;
-            }
-
-            // Crear cliente
-            clienteService.crearCliente(
-                nuevoCliente.getNombre().trim(),
-                nuevoCliente.getCorreo().trim(),
-                tipoSeleccionado.getIdClienteTipo()
-            );
+            nuevoCliente.setClienteTipo(tipoSeleccionado);
+            nuevoCliente.setCreadoEn(new Date());
+            clienteService.crearCliente(nuevoCliente);
 
             mostrarExito("Cliente creado correctamente");
-            
-            // Recargar lista
-            cargarClientesPorTipo();
-            
-          
-            mostrarDialogCrear = false;
+            cargarClientesPorTipo(tipoSeleccionado.getIdClienteTipo());
             nuevoCliente = new Cliente();
 
-            System.out.println("🔷 ===== FIN CREAR CLIENTE =====\n");
-
-        } catch (RuntimeException e) {
-            System.err.println("❌ Error: " + e.getMessage());
-            mostrarError(e.getMessage());
+        } catch (Exception e) {
+            mostrarError("Error al crear cliente: " + e.getMessage());
         }
     }
 
-    public void volverATipos() {
-        tipoSeleccionado = null;
-        clientesFiltrados = null;
+    public void seleccionarCliente(Cliente cliente) {
+        this.clienteSeleccionado = cliente;
+    }
+
+    public void eliminarCliente(Integer idCliente) {
+        try {
+            clienteService.eliminarCliente(idCliente);
+            mostrarExito("Cliente eliminado correctamente");
+            if (tipoSeleccionado != null) {
+                cargarClientesPorTipo(tipoSeleccionado.getIdClienteTipo());
+            }
+        } catch (Exception e) {
+            mostrarError("Error al eliminar cliente: " + e.getMessage());
+        }
+    }
+
+    private void mostrarAdvertencia(String titulo, String mensaje) {
+        FacesContext.getCurrentInstance().addMessage(null,
+            new FacesMessage(FacesMessage.SEVERITY_WARN, titulo, mensaje));
     }
 
     private void mostrarExito(String mensaje) {
         FacesContext.getCurrentInstance().addMessage(null,
-            new FacesMessage(FacesMessage.SEVERITY_INFO, "✅ Éxito", mensaje));
+            new FacesMessage(FacesMessage.SEVERITY_INFO, "Éxito", mensaje));
     }
 
     private void mostrarError(String mensaje) {
         FacesContext.getCurrentInstance().addMessage(null,
-            new FacesMessage(FacesMessage.SEVERITY_ERROR, "❌ Error", mensaje));
+            new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", mensaje));
     }
-
- 
 
     public List<ClienteTipo> getTiposCliente() {
         return tiposCliente;
+    }
+
+    public void setTiposCliente(List<ClienteTipo> tiposCliente) {
+        this.tiposCliente = tiposCliente;
+    }
+
+    public List<Cliente> getClientesFiltrados() {
+        return clientesFiltrados;
+    }
+
+    public void setClientesFiltrados(List<Cliente> clientesFiltrados) {
+        this.clientesFiltrados = clientesFiltrados;
     }
 
     public ClienteTipo getTipoSeleccionado() {
@@ -132,8 +160,12 @@ public class ClienteController implements Serializable {
         this.tipoSeleccionado = tipoSeleccionado;
     }
 
-    public List<Cliente> getClientesFiltrados() {
-        return clientesFiltrados;
+    public Cliente getClienteSeleccionado() {
+        return clienteSeleccionado;
+    }
+
+    public void setClienteSeleccionado(Cliente clienteSeleccionado) {
+        this.clienteSeleccionado = clienteSeleccionado;
     }
 
     public Cliente getNuevoCliente() {
@@ -142,13 +174,5 @@ public class ClienteController implements Serializable {
 
     public void setNuevoCliente(Cliente nuevoCliente) {
         this.nuevoCliente = nuevoCliente;
-    }
-
-    public boolean isMostrarDialogCrear() {
-        return mostrarDialogCrear;
-    }
-
-    public void setMostrarDialogCrear(boolean mostrarDialogCrear) {
-        this.mostrarDialogCrear = mostrarDialogCrear;
     }
 }

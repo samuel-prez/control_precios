@@ -10,8 +10,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+/**
+ * Configuración central de Spring Security.
+ *
+ * <p>Define tres aspectos principales:</p>
+ * <ul>
+ *   <li><b>Autenticación:</b> cómo se verifica la identidad (BCrypt + base de datos)</li>
+ *   <li><b>Autorización:</b> qué URLs puede acceder cada rol</li>
+ *   <li><b>Sesión:</b> comportamiento de login / logout</li>
+ * </ul>
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -22,54 +31,75 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
+    /**
+     * Codificador de contraseñas BCrypt (factor de coste por defecto: 10).
+     * Se usa al crear usuarios y al verificar credenciales en el login.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Proveedor de autenticación que combina:
+     * <ul>
+     *   <li>{@link CustomUserDetailsService} – carga el usuario desde la BD</li>
+     *   <li>{@link BCryptPasswordEncoder} – verifica la contraseña hasheada</li>
+     * </ul>
+     */
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
+    public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }
 
+    /**
+     * Cadena de filtros de seguridad HTTP.
+     *
+     * <p>Orden de reglas (el primero que coincide gana):</p>
+     * <ol>
+     *   <li>Recursos públicos → {@code permitAll}</li>
+     *   <li>Páginas de solo ADMIN → {@code hasAuthority("ROLE_ADMIN")}</li>
+     *   <li>Páginas compartidas → {@code hasAnyAuthority(...)}</li>
+     *   <li>Todo lo demás → debe estar autenticado</li>
+     * </ol>
+     *
+     * <p><b>CSRF desactivado</b> porque JSF maneja su propia protección CSRF;
+     * activar ambas causaría conflictos de tokens.</p>
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authz -> authz
-              
                 .requestMatchers(
-                    new AntPathRequestMatcher("/"),
-                    new AntPathRequestMatcher("/index.xhtml"),
-                    new AntPathRequestMatcher("/pages/login.xhtml"),
-                    new AntPathRequestMatcher("/pages/403.xhtml"),
-                    new AntPathRequestMatcher("/pages/404.xhtml"),
-                    new AntPathRequestMatcher("/error"),
-                    new AntPathRequestMatcher("/javax.faces.resource/**"),
-                    new AntPathRequestMatcher("/resources/**"),
-                    new AntPathRequestMatcher("/css/**"),
-                    new AntPathRequestMatcher("/js/**"),
-                    new AntPathRequestMatcher("/images/**"),
-                    new AntPathRequestMatcher("/assets/**")
+                    "/",
+                    "/index.xhtml",
+                    "/pages/login.xhtml",
+                    "/pages/403.xhtml",
+                    "/pages/404.xhtml",
+                    "/error",
+                    "/javax.faces.resource/**",
+                    "/resources/**",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/assets/**",
+                    "/api/test/**"
                 ).permitAll()
-                
-                // Solo ADMIN
+
                 .requestMatchers(
-                    new AntPathRequestMatcher("/pages/create_users.xhtml")
+                    "/pages/create_users.xhtml",
+                    "/pages/historial.xhtml"
                 ).hasAuthority("ROLE_ADMIN")
-                
-                // ADMIN y USER
+
                 .requestMatchers(
-                    new AntPathRequestMatcher("/pages/home.xhtml"),
-                    new AntPathRequestMatcher("/pages/products.xhtml"),
-                    new AntPathRequestMatcher("/pages/clients.xhtml"),
-                    new AntPathRequestMatcher("/pages/cotizaciones.xhtml") 
-                ).hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
-                
-                // Resto de rutas requieren autenticación
+                    "/pages/home.xhtml",
+                    "/pages/products.xhtml"
+                ).hasAnyAuthority("ROLE_ADMIN", "ROLE_COSTOS", "ROLE_CATALOGO", "ROLE_CONSULTA")
+
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

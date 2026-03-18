@@ -1,111 +1,733 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    template="../templates/template.xhtml">
 
-<p:dialog 
-    id="dialogCrear"
-    header="Crear Nuevo Producto" 
-    widgetVar="dialogCrear" 
-    modal="true"
-    width="600"
-    visible="#{productoController.mostrarDialogCrear}">
-    
-    <h:form id="formCrearProducto" enctype="multipart/form-data">
-        <p:growl id="messagesDialog" showDetail="true" />
-        
-        <div class="p-fluid">
-            <div class="p-field mb-3">
-                <label for="codigoEstilo" class="font-bold">
-                    Código Estilo <span class="text-muted">(opcional)</span>
-                </label>
-                <p:inputText 
-                    id="codigoEstilo"
-                    value="#{productoController.nuevoProducto.codigoEstilo}"
-                    placeholder="Ej: EST-001" />
-                <small class="text-muted block mt-1">
-                    ⚠️ Solo uno de los dos códigos es obligatorio
-                </small>
-            </div>
+    <ui:define name="titulo">Gestión de Productos</ui:define>
+    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
+    <ui:define name="nombrePagina">Productos</ui:define>
 
-         
-            <div class="p-field mb-3">
-                <label for="codigoPrototipo" class="font-bold">
-                    Código Prototipo <span class="text-muted">(opcional)</span>
-                </label>
-                <p:inputText 
-                    id="codigoPrototipo"
-                    value="#{productoController.nuevoProducto.codigoPrototipo}"
-                    placeholder="Ej: PROT-001" />
-                <small class="text-muted block mt-1">
-                    ℹ️ Si deja ambos vacíos, mostrará error
-                </small>
-            </div>
+    <ui:define name="scripts">
+        <script type="text/javascript">
+            //<![CDATA[
+            var currentFotoProd = 1;
+            function prevFotoProd() {
+                if (currentFotoProd > 1) {
+                    document.getElementById('divFotoProd' + currentFotoProd).style.display = 'none';
+                    currentFotoProd--;
+                    document.getElementById('divFotoProd' + currentFotoProd).style.display = 'block';
+                    var ind = document.getElementById('fotoIndicatorProd');
+                    if (ind) ind.textContent = 'Foto ' + currentFotoProd + ' / 2';
+                }
+            }
+            function nextFotoProd() {
+                if (currentFotoProd < 2) {
+                    document.getElementById('divFotoProd' + currentFotoProd).style.display = 'none';
+                    currentFotoProd++;
+                    document.getElementById('divFotoProd' + currentFotoProd).style.display = 'block';
+                    var ind = document.getElementById('fotoIndicatorProd');
+                    if (ind) ind.textContent = 'Foto ' + currentFotoProd + ' / 2';
+                }
+            }
+            function resetCarouselProd() {
+                currentFotoProd = 1;
+                var s1 = document.getElementById('divFotoProd1');
+                var s2 = document.getElementById('divFotoProd2');
+                if (s1) s1.style.display = 'block';
+                if (s2) s2.style.display = 'none';
+                var ind = document.getElementById('fotoIndicatorProd');
+                if (ind) ind.textContent = 'Foto 1 / 2';
+            }
+            //]]>
+        </script>
+    </ui:define>
+    <ui:define name="contenido">
 
-            <div class="p-field mb-3">
-                <label for="descripcion" class="font-bold">Descripción *</label>
-                <p:inputTextarea 
-                    id="descripcion"
-                    value="#{productoController.nuevoProducto.descripcion}"
-                    rows="3"
-                    placeholder="Descripción del producto" />
-            </div>
+        <p:growl id="messages" showDetail="true" life="5000" />
 
-            <div class="p-field mb-4">
-                <label class="font-bold">Imagen del Producto (opcional)</label>
-                <small class="block mb-2" style="color: #6c757d;">
-                    📸 La imagen será automáticamente optimizada y comprimida
-                </small>
-                
-              
-                <h:panelGroup rendered="#{productoController.tieneImagen}">
-                    <div class="mb-3" style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                        <img src="#{productoController.imagenBase64}" 
-                             alt="Preview" 
-                             style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" />
-                        <br/>
-                        <p:commandButton 
-                            value="Eliminar imagen" 
+        <h:form id="formPrincipal">
+            <p:panel header="Gestión de Productos" style="margin-bottom: 20px;">
+
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 15px; align-items: flex-end;">
+                    <div>
+                        <p:outputLabel value="Buscar producto:" for="busqueda" />
+                        <p:inputText id="busqueda"
+                                   value="#{productoGestionController.terminoBusqueda}"
+                                   maxlength="8"
+                                   style="width: 150px;" />
+                    </div>
+                    <p:commandButton value="Buscar"
+                                   icon="pi pi-search"
+                                   action="#{productoGestionController.buscarProductos()}"
+                                   update=":formPrincipal:tablaProductos"
+                                   styleClass="p-button-primary" />
+                    <p:commandButton
+                        value="Nuevo Producto"
+                        icon="pi pi-plus"
+                        onclick="PF('dlgNuevoProducto').show(); return false;"
+                        type="button"
+                        styleClass="p-button-success"
+                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}" />
+                    <p:commandButton
+                        value="Importar Excel"
+                        icon="pi pi-file-excel"
+                        onclick="PF('dlgImportarExcel').show(); return false;"
+                        type="button"
+                        styleClass="p-button-help"
+                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}" />
+                </div>
+
+                <p:dataTable
+                    id="tablaProductos"
+                    value="#{productoGestionController.productosFiltrados}"
+                    var="producto"
+                    selection="#{productoGestionController.productoSeleccionadoFila}"
+                    rowKey="#{producto.idProducto}"
+                    selectionMode="single"
+                    emptyMessage="No hay productos registrados"
+                    styleClass="p-datatable-striped"
+                    paginator="true"
+                    rows="10">
+
+                    <p:ajax event="rowSelect"
+                            listener="#{productoGestionController.seleccionarProducto(productoGestionController.productoSeleccionadoFila)}"
+                            update=":formPrincipal:panelAcciones :formPrincipal:contenedorPanelColores" />
+                    <p:ajax event="rowUnselect" update=":formPrincipal:panelAcciones :formPrincipal:contenedorPanelColores" />
+
+
+                    <p:column headerText="Código Estilo" sortBy="#{producto.codigoEstilo}">
+                        <h:outputText value="#{producto.codigoEstilo}" />
+                    </p:column>
+
+                    <p:column headerText="Código Prototipo" sortBy="#{producto.codigoPrototipo}">
+                        <h:outputText value="#{producto.codigoPrototipo}" />
+                    </p:column>
+
+                    <p:column headerText="Descripción">
+                        <h:outputText value="#{producto.descripcion}" />
+                    </p:column>
+
+                    <p:column headerText="Tallas" style="width: 150px;">
+                        <h:outputText value="#{producto.tallas}"
+                                     rendered="#{producto.tallas != null and producto.tallas != ''}" />
+                        <h:outputText value="-"
+                                     rendered="#{producto.tallas == null or producto.tallas == ''}"
+                                     style="color: #999;" />
+                    </p:column>
+
+                    <p:column headerText="Fecha Creación" style="width: 130px;">
+                        <h:outputText value="#{producto.creadoEn}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Clientes Exclusivos" style="width: 180px;">
+                        <h:outputText value="#{producto.nombresClientesExclusivos}"
+                                     rendered="#{producto.esExclusivo}"
+                                     style="color: #e65100; font-weight: 600;" />
+                        <h:outputText value="-"
+                                     rendered="#{!producto.esExclusivo}"
+                                     style="color: #999;" />
+                    </p:column>
+
+                    <p:column headerText="Colores" style="width: 100px; text-align: center;">
+                        <h:outputText value="#{productoGestionController.contarColores(producto.idProducto)}"
+                                     style="font-size: 0.875rem;" />
+                    </p:column>
+                </p:dataTable>
+
+                <!-- Panel de acciones que aparece debajo de la tabla cuando se selecciona una fila -->
+                <h:panelGroup id="panelAcciones" style="margin-top: 15px;">
+                    <div style="display: flex; gap: 10px; justify-content: center; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;"
+                         rendered="#{productoGestionController.productoSeleccionadoFila != null}">
+                        <p:commandButton
+                            value="Ver Imagen"
+                            icon="pi pi-image"
+                            title="Ver Imagen del Producto"
+                            action="#{productoGestionController.seleccionarProductoParaVer(productoGestionController.productoSeleccionadoFila)}"
+                            oncomplete="PF('dlgVerImagen').show()"
+                            update=":dlgVerImagen"
+                            styleClass="p-button-help"
+                            disabled="#{productoGestionController.productoSeleccionadoFila.imagenProducto == null}" />
+                        <p:commandButton
+                            value="Colores"
+                            icon="pi pi-palette"
+                            title="Ver Colores del Producto"
+                            action="#{productoGestionController.abrirPanelColores(productoGestionController.productoSeleccionadoFila)}"
+                            update=":formPrincipal:contenedorPanelColores"
+                            styleClass="p-button-info" />
+                        <p:commandButton
+                            value="Editar"
+                            icon="pi pi-pencil"
+                            title="Editar Producto"
+                            action="#{productoGestionController.prepararEdicion(productoGestionController.productoSeleccionadoFila)}"
+                            oncomplete="PF('dlgEditarProducto').show()"
+                            update=":formEditarProducto"
+                            styleClass="p-button-warning"
+                            rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}" />
+                        <p:commandButton
+                            value="Eliminar"
                             icon="pi pi-trash"
-                            action="#{productoController.limpiarImagen()}"
-                            update="formCrearProducto"
-                            styleClass="p-button-danger p-button-sm mt-3"
-                            type="button" />
+                            title="Eliminar Producto"
+                            action="#{productoGestionController.eliminarProducto(productoGestionController.productoSeleccionadoFila.idProducto)}"
+                            update=":formPrincipal:tablaProductos :formPrincipal:panelAcciones :messages"
+                            styleClass="p-button-danger"
+                            rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}">
+                            <p:confirm header="Confirmar Eliminación"
+                                     message="¿Está seguro de eliminar el producto '#{productoGestionController.productoSeleccionadoFila.descripcion}'? Esta acción no se puede deshacer."
+                                     icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
                     </div>
                 </h:panelGroup>
-                
-     
-                <h:panelGroup rendered="#{!productoController.tieneImagen}">
-                    <p:fileUpload 
-                        mode="advanced"
-                        listener="#{productoController.handleFileUpload}"
-                        update="formCrearProducto, messagesDialog"
-                        auto="true"
-                        dragDropSupport="true"
-                        accept="image/*"
-                        label="Seleccionar imagen"
-                        uploadLabel="Subir"
-                        cancelLabel="Cancelar"
-                        chooseIcon="pi pi-upload"
-                        styleClass="w-full" />
-                    <small class="text-muted block mt-2">
-                        ✅ Formatos: JPG, PNG, GIF | 📦 Tamaño máx: 10MB | 🔧 Compresión automática
-                    </small>
-                </h:panelGroup>
-            </div>
 
-            <div class="flex gap-2 justify-content-end mt-4">
-                <p:commandButton 
-                    value="Cancelar" 
-                    icon="pi pi-times"
-                    onclick="PF('dialogCrear').hide()"
-                    styleClass="p-button-secondary"
-                    type="button" />
-                
-                <p:commandButton 
-                    value="Crear Producto" 
-                    icon="pi pi-check"
-                    action="#{productoController.crearProducto()}"
-                    update="formProductos, messagesDialog, :formProductos:messages"
-                    oncomplete="if (args.validationFailed) return; PF('dialogCrear').hide();"
-                    styleClass="p-button-success" />
-            </div>
-        </div>
-    </h:form>
-</p:dialog>
+            </p:panel>
+
+            <h:panelGroup id="contenedorPanelColores">
+                <p:panel id="panelColores"
+                         header="Colores del Producto: #{productoGestionController.productoSeleccionado != null ? productoGestionController.productoSeleccionado.descripcion : 'Selecciona un producto'}"
+                         rendered="#{productoGestionController.productoSeleccionado != null}"
+                         style="margin-bottom: 20px;">
+
+                <div style="margin-bottom: 10px;">
+                    <p:commandButton
+                        value="Agregar Color"
+                        icon="pi pi-plus"
+                        type="button"
+                        onclick="PF('dlgNuevoColor').show(); return false;"
+                        ajax="false"
+                        styleClass="p-button-success"
+                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}" />
+                    <p:commandButton
+                        value="Cerrar Panel"
+                        icon="pi pi-times"
+                        action="#{productoGestionController.limpiarSeleccion()}"
+                        update=":formPrincipal:contenedorPanelColores"
+                        styleClass="p-button-secondary"
+                        style="margin-left: 8px;" />
+                </div>
+
+                <p:dataTable
+                    id="tablaColores"
+                    value="#{productoGestionController.coloresDelProducto}"
+                    var="productoColor"
+                    emptyMessage="No hay colores para este producto"
+                    styleClass="p-datatable-striped"
+                    style="width: 100%;">
+
+                    <p:column headerText="Color" sortBy="#{productoColor.color.nombre}">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="display: inline-block; width: 24px; height: 24px; border-radius: 4px; border: 2px solid #ddd; background-color: #{productoColor.color.codigoHex};"></span>
+                            <h:outputText value="#{productoColor.color.nombre}" style="font-weight: 600;" />
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Fecha Creación" style="width: 180px;">
+                        <h:outputText value="#{productoColor.creadoEn}">
+                            <f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Acciones" style="width: 100px; text-align: center;"
+                             rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}">
+                        <p:commandButton
+                            icon="pi pi-trash"
+                            title="Eliminar Color"
+                            action="#{productoGestionController.eliminarColor(productoColor.idProductoColor)}"
+                            update=":formPrincipal:contenedorPanelColores :messages"
+                            styleClass="p-button-danger p-button-sm">
+                            <p:confirm header="Confirmar"
+                                     message="¿Está seguro de eliminar el color '#{productoColor.color.nombre}'?"
+                                     icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
+                    </p:column>
+                </p:dataTable>
+            </p:panel>
+            </h:panelGroup>
+        </h:form>
+
+        <p:dialog header="Crear Nuevo Producto"
+                  widgetVar="dlgNuevoProducto"
+                  modal="true"
+                  width="600"
+                  height="500"
+                  closeOnEscape="true">
+            <h:form id="formNuevoProducto" enctype="multipart/form-data">
+                <div class="p-fluid" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Código Estilo:" for="codigoEstilo" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="codigoEstilo"
+                                   value="#{productoGestionController.nuevoProducto.codigoEstilo}"
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Al menos uno de los dos códigos es obligatorio
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Código Prototipo:" for="codigoPrototipo" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="codigoPrototipo"
+                                   value="#{productoGestionController.nuevoProducto.codigoPrototipo}"
+
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Al menos uno de los dos códigos es obligatorio
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Descripción (Opcional):" for="descripcion" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputTextarea id="descripcion"
+                                       value="#{productoGestionController.nuevoProducto.descripcion}"
+                                       rows="3"
+                                       style="width: 100%;" />
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Tallas (Opcional):" for="tallas" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="tallas"
+                                   value="#{productoGestionController.nuevoProducto.tallas}"
+                                   maxlength="255"
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Ingrese las tallas del producto separadas por coma
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1rem;">
+                        <p:outputLabel value="Foto 1:" for="imagenUpload" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:fileUpload id="imagenUpload"
+                                      value="#{productoGestionController.uploadedFile}"
+                                      mode="simple"
+                                      accept="image/*"
+                                      skinSimple="true"
+                                      style="width: 100%;" />
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Foto 2:" for="imagenUpload2" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:fileUpload id="imagenUpload2"
+                                      value="#{productoGestionController.uploadedFile2}"
+                                      mode="simple"
+                                      accept="image/*"
+                                      skinSimple="true"
+                                      style="width: 100%;" />
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Clientes Exclusivos (opcional):" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <small style="display: block; margin-bottom: 0.5rem; color: #6c757d;">
+                            Si seleccionas clientes, el producto será exclusivo para ellos
+                        </small>
+                        <p:selectManyCheckbox id="clientesExclusivos"
+                                              value="#{productoGestionController.clientesExclusivosIds}"
+                                              layout="responsive"
+                                              columns="2">
+                            <f:selectItems value="#{productoGestionController.clientesDisponibles}"
+                                          var="cli"
+                                          itemLabel="#{cli.nombre}"
+                                          itemValue="#{cli.idCliente}" />
+                        </p:selectManyCheckbox>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: flex-end;">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgNuevoProducto').hide(); return false;"
+                            styleClass="p-button-secondary" />
+                        <p:commandButton
+                            value="Guardar Producto"
+                            icon="pi pi-check"
+                            action="#{productoGestionController.crearProducto()}"
+                            update=":formPrincipal:tablaProductos :messages formNuevoProducto"
+                            oncomplete="PF('dlgNuevoProducto').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Editar Producto"
+                  widgetVar="dlgEditarProducto"
+                  modal="true"
+                  width="600"
+                  height="500"
+                  closeOnEscape="true">
+            <h:form id="formEditarProducto" enctype="multipart/form-data">
+                <div class="p-fluid" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Código Estilo:" for="editCodigoEstilo" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="editCodigoEstilo"
+                                   value="#{productoGestionController.productoEditando.codigoEstilo}"
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Al menos uno de los dos códigos es obligatorio
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Código Prototipo:" for="editCodigoPrototipo" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="editCodigoPrototipo"
+                                   value="#{productoGestionController.productoEditando.codigoPrototipo}"
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Al menos uno de los dos códigos es obligatorio
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Descripción (Opcional):" for="editDescripcion" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputTextarea id="editDescripcion"
+                                       value="#{productoGestionController.productoEditando.descripcion}"
+                                       rows="3"
+                                       style="width: 100%;" />
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Tallas (Opcional):" for="editTallas" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="editTallas"
+                                   value="#{productoGestionController.productoEditando.tallas}"
+                                   maxlength="255"
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Ingrese las tallas del producto separadas por coma
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1rem;">
+                        <p:outputLabel value="Cambiar Foto 1:" for="editImagenUpload" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:fileUpload id="editImagenUpload"
+                                      value="#{productoGestionController.uploadedFile}"
+                                      mode="simple"
+                                      accept="image/*"
+                                      skinSimple="true"
+                                      style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Deja vacío si no deseas cambiar la foto 1. Máximo 5MB.
+                        </small>
+                    </div>
+
+                    <div class="p-field mb-3" rendered="#{productoGestionController.productoEditando.imagenProducto != null}">
+                        <p:outputLabel value="Foto 1 actual:" />
+                        <div class="mt-2">
+                            <img src="#{productoGestionController.productoEditando.imagenProducto}"
+                                 style="max-width: 180px; max-height: 140px; border-radius: 8px; border: 1px solid #dee2e6;"
+                                 alt="Foto 1 actual" />
+                        </div>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1rem;">
+                        <p:outputLabel value="Cambiar Foto 2:" for="editImagenUpload2" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:fileUpload id="editImagenUpload2"
+                                      value="#{productoGestionController.uploadedFile2}"
+                                      mode="simple"
+                                      accept="image/*"
+                                      skinSimple="true"
+                                      style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Deja vacío si no deseas cambiar la foto 2. Máximo 5MB.
+                        </small>
+                    </div>
+
+                    <div class="p-field mb-3" rendered="#{productoGestionController.productoEditando.imagenProducto2 != null}">
+                        <p:outputLabel value="Foto 2 actual:" />
+                        <div class="mt-2">
+                            <img src="#{productoGestionController.productoEditando.imagenProducto2}"
+                                 style="max-width: 180px; max-height: 140px; border-radius: 8px; border: 1px solid #dee2e6;"
+                                 alt="Foto 2 actual" />
+                        </div>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Clientes Exclusivos (opcional):" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <small style="display: block; margin-bottom: 0.5rem; color: #6c757d;">
+                            Si seleccionas clientes, el producto será exclusivo para ellos
+                        </small>
+                        <p:selectManyCheckbox id="editClientesExclusivos"
+                                              value="#{productoGestionController.clientesExclusivosIds}"
+                                              layout="responsive"
+                                              columns="2">
+                            <f:selectItems value="#{productoGestionController.clientesDisponibles}"
+                                          var="cli"
+                                          itemLabel="#{cli.nombre}"
+                                          itemValue="#{cli.idCliente}" />
+                        </p:selectManyCheckbox>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgEditarProducto').hide()"
+                            type="button"
+                            styleClass="p-button-secondary" />
+
+                        <p:commandButton
+                            value="Actualizar Producto"
+                            icon="pi pi-check"
+                            action="#{productoGestionController.actualizarProducto()}"
+                            update=":formPrincipal:tablaProductos :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgEditarProducto').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgVerImagen"
+                  header="Imagen del Producto"
+                  widgetVar="dlgVerImagen"
+                  modal="true"
+                  width="420"
+                  height="auto"
+                  responsive="true"
+                  closeOnEscape="true"
+                  position="center top"
+                  style="margin-top: 50px;"
+                  appendTo="@(body)"
+                  onShow="resetCarouselProd()">
+            <h:form>
+                <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer != null}">
+                    <div style="text-align: center; padding: 10px;">
+                        <h4 style="margin-bottom: 10px; color: #333; font-size: 1rem;">
+                            #{productoGestionController.productoSeleccionadoVer.codigoEstilo} -
+                            #{productoGestionController.productoSeleccionadoVer.descripcion}
+                        </h4>
+
+                        <!-- Carousel con flechas -->
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+
+                            <!-- Flecha izquierda (solo si hay foto 2) -->
+                            <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer.imagenProducto2 != null}">
+                                <button type="button" onclick="prevFotoProd()"
+                                        style="background: rgba(0,0,0,0.45); color: white; border: none; border-radius: 50%;
+                                               width: 38px; height: 38px; font-size: 1.2rem; cursor: pointer;
+                                               display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    &#10094;
+                                </button>
+                            </h:panelGroup>
+
+                            <!-- Contenedor de imágenes -->
+                            <div>
+                                <div id="divFotoProd1">
+                                    <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer.imagenProducto != null}">
+                                        <img src="#{productoGestionController.productoSeleccionadoVer.imagenProducto}"
+                                             alt="Foto 1"
+                                             style="max-width: 290px; max-height: 370px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    </h:panelGroup>
+                                </div>
+                                <div id="divFotoProd2" style="display:none;">
+                                    <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer.imagenProducto2 != null}">
+                                        <img src="#{productoGestionController.productoSeleccionadoVer.imagenProducto2}"
+                                             alt="Foto 2"
+                                             style="max-width: 290px; max-height: 370px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+
+                            <!-- Flecha derecha (solo si hay foto 2) -->
+                            <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer.imagenProducto2 != null}">
+                                <button type="button" onclick="nextFotoProd()"
+                                        style="background: rgba(0,0,0,0.45); color: white; border: none; border-radius: 50%;
+                                               width: 38px; height: 38px; font-size: 1.2rem; cursor: pointer;
+                                               display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    &#10095;
+                                </button>
+                            </h:panelGroup>
+                        </div>
+
+                        <!-- Indicador de foto (solo si hay foto 2) -->
+                        <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer.imagenProducto2 != null}">
+                            <div style="margin-top: 8px; color: #666; font-size: 0.85rem;">
+                                <span id="fotoIndicatorProd">Foto 1 / 2</span>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{productoGestionController.productoSeleccionadoVer.imagenProducto == null and productoGestionController.productoSeleccionadoVer.imagenProducto2 == null}">
+                            <div style="color: #999; font-size: 1rem; padding: 40px 20px;">
+                                <i class="pi pi-image" style="font-size: 3rem; display: block; margin-bottom: 10px; color: #ccc;"></i>
+                                <p style="margin: 0;">Sin imágenes</p>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Agregar Color al Producto"
+                  widgetVar="dlgNuevoColor"
+                  modal="true"
+                  width="450"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formNuevoColor">
+                <div class="p-fluid">
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Buscar Color:" for="colorAutoComplete" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:autoComplete id="colorAutoComplete"
+                                       value="#{productoGestionController.colorSeleccionadoId}"
+                                       completeMethod="#{productoGestionController.completarColor}"
+                                       var="color"
+                                       itemLabel="#{color.nombre}"
+                                       itemValue="#{color.idColor}"
+                                       forceSelection="true"
+                                       scrollHeight="300"
+                                       minQueryLength="0"
+                                       style="width: 100%;">
+                            <p:column>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ddd; background-color: #{color.codigoHex != null ? color.codigoHex : '#ccc'};"></div>
+                                    <span style="font-weight: 600;">#{color.nombre}</span>
+                                </div>
+                            </p:column>
+                        </p:autoComplete>
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Escribe el nombre del color para buscarlo rápidamente
+                        </small>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: flex-end;">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgNuevoColor').hide(); return false;"
+                            styleClass="p-button-secondary" />
+                        <p:commandButton
+                            value="Agregar Color"
+                            icon="pi pi-check"
+                            action="#{productoGestionController.agregarColor()}"
+                            process="@form"
+                            update=":formPrincipal:contenedorPanelColores :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgNuevoColor').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <h:form id="confirmForm">
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+            <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes p-button-success" />
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no p-button-secondary" />
+        </p:confirmDialog>
+        </h:form>
+
+        <!-- Diálogo para editar código del color -->
+        <p:dialog header="Editar Código del Color"
+                  widgetVar="dlgEditarCodigo"
+                  modal="true"
+                  width="400"
+                  closeOnEscape="true">
+            <h:form id="formEditarCodigo">
+                <div class="p-fluid">
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Color:" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <h:outputText value="#{productoGestionController.productoColorEditando != null ? productoGestionController.productoColorEditando.color.nombre : ''}"
+                                     style="display: block; padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px;" />
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Código del Cliente:" for="codigoInput" style="display: block; margin-bottom: 0.5rem;" />
+                        <p:inputText id="codigoInput"
+                                   value="#{productoGestionController.productoColorEditando.codigoColor}"
+                                   maxlength="50"
+                                   style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Ingrese el código como lo conoce el cliente
+                        </small>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: flex-end;">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgEditarCodigo').hide(); return false;"
+                            styleClass="p-button-secondary" />
+                        <p:commandButton
+                            value="Guardar"
+                            icon="pi pi-check"
+                            action="#{productoGestionController.actualizarCodigoColor()}"
+                            update=":formPrincipal:tablaColores :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgEditarCodigo').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Diálogo para importar productos desde Excel -->
+        <p:dialog header="Importar Productos desde Excel"
+                  widgetVar="dlgImportarExcel"
+                  modal="true"
+                  width="550"
+                  closeOnEscape="true">
+            <h:form id="formImportarExcel" enctype="multipart/form-data">
+                <div class="p-fluid">
+                    <!-- Instrucciones -->
+                    <div style="margin-bottom: 1.5rem; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;">
+                        <h4 style="margin: 0 0 10px 0; color: #1565c0;">
+                            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>Instrucciones
+                        </h4>
+                        <ol style="margin: 0; padding-left: 20px; color: #333;">
+                            <li>Descarga la plantilla Excel</li>
+                            <li>Completa los datos de los productos</li>
+                            <li>Sube el archivo completado</li>
+                        </ol>
+                    </div>
+
+                    <!-- Paso 1: Descargar plantilla -->
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Paso 1: Descargar Plantilla" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <p:commandLink ajax="false" style="text-decoration: none;">
+                            <p:graphicImage name="images/excel-icon.png" style="vertical-align: middle; margin-right: 8px;" rendered="false" />
+                            <h:outputText value="Descargar plantilla_productos.xlsx" style="color: #059669; font-weight: 600;" />
+                            <p:fileDownload value="#{productoGestionController.plantillaExcel}" />
+                        </p:commandLink>
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Archivo Excel con el formato correcto para importar
+                        </small>
+                    </div>
+
+                    <!-- Paso 2: Subir archivo -->
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Paso 2: Subir Archivo Excel" for="excelUpload" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <p:fileUpload id="excelUpload"
+                                      value="#{productoGestionController.archivoExcel}"
+                                      mode="simple"
+                                      accept=".xlsx,.xls"
+                                      skinSimple="true"
+                                      style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Formatos aceptados: .xlsx, .xls
+                        </small>
+                    </div>
+
+                    <!-- Nota importante -->
+                    <div style="margin-bottom: 1rem; padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
+                        <small style="color: #e65100;">
+                            <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+                            <strong>Nota:</strong> Si un producto ya existe (mismo código), se actualizará con los nuevos datos.
+                        </small>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: flex-end;">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgImportarExcel').hide(); return false;"
+                            styleClass="p-button-secondary" />
+                        <p:commandButton
+                            value="Importar Productos"
+                            icon="pi pi-upload"
+                            action="#{productoGestionController.importarProductosDesdeExcel()}"
+                            update=":formPrincipal:tablaProductos :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgImportarExcel').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

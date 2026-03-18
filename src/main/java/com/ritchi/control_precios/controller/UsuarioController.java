@@ -77,7 +77,8 @@ public class UsuarioController implements Serializable {
                 nuevoUsuario.getNombre().trim(),
                 nuevoUsuario.getEmail().trim(),
                 nuevoUsuario.getPassword(),
-                rolSeleccionado.trim()
+                rolSeleccionado.trim(),
+                nuevoUsuario.getTelefono()
             );
 
             System.out.println("✅ Usuario creado exitosamente en BD");

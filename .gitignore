@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Locales ###
+.claude/
+documentacion/
+estudiar/
+mvn_run.log
+nul

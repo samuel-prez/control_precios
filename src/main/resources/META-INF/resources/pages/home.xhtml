@@ -1,211 +1,1307 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
-
-<ui:composition template="../templates/template.xhtml">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    template="../templates/template.xhtml">
     
-    <ui:define name="titulo">Home - Control de Precios</ui:define>
-    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
-    <ui:define name="nombrePagina">Dashboard Principal</ui:define>
+    <ui:define name="titulo">Home</ui:define>
 
-    <ui:define name="bienvenida-section">
-        <!-- Vacío -->
+    <ui:define name="scripts">
+        <script type="text/javascript">
+            //<![CDATA[
+            // Carousel de fotos del producto (home)
+            var currentFotoHome = 1;
+            function prevFotoHome() {
+                if (currentFotoHome > 1) {
+                    document.getElementById('divFotoHome' + currentFotoHome).style.display = 'none';
+                    currentFotoHome--;
+                    document.getElementById('divFotoHome' + currentFotoHome).style.display = 'block';
+                    var ind = document.getElementById('fotoIndicatorHome');
+                    if (ind) ind.textContent = 'Foto ' + currentFotoHome + ' / 2';
+                }
+            }
+            function nextFotoHome() {
+                if (currentFotoHome < 2) {
+                    document.getElementById('divFotoHome' + currentFotoHome).style.display = 'none';
+                    currentFotoHome++;
+                    document.getElementById('divFotoHome' + currentFotoHome).style.display = 'block';
+                    var ind = document.getElementById('fotoIndicatorHome');
+                    if (ind) ind.textContent = 'Foto ' + currentFotoHome + ' / 2';
+                }
+            }
+            function resetCarouselHome() {
+                currentFotoHome = 1;
+                var s1 = document.getElementById('divFotoHome1');
+                var s2 = document.getElementById('divFotoHome2');
+                if (s1) s1.style.display = 'block';
+                if (s2) s2.style.display = 'none';
+                var ind = document.getElementById('fotoIndicatorHome');
+                if (ind) ind.textContent = 'Foto 1 / 2';
+            }
+
+            // Función para manejar el acordeón: cierra otras filas y abre la seleccionada
+            function manejarAcordeon() {
+                setTimeout(function() {
+                    var tableId = '#formProductosCliente\\:tablaProductosCliente';
+                    var selectedRow = document.querySelector(tableId + ' .ui-datatable-data > tr.ui-state-highlight:not(.ui-expanded-row-content)');
+                    var expandedRows = document.querySelectorAll(tableId + ' .ui-datatable-data > tr.ui-expanded-row');
+
+                    // Determinar si la fila seleccionada ya estaba expandida
+                    var yaExpandida = selectedRow && selectedRow.classList.contains('ui-expanded-row');
+
+                    // Cerrar todas las filas expandidas
+                    expandedRows.forEach(function(row) {
+                        var toggler = row.querySelector('.ui-row-toggler');
+                        if (toggler) {
+                            toggler.click();
+                        }
+                    });
+
+                    // Si la fila seleccionada NO estaba expandida, abrirla después de cerrar las demás
+                    if (!yaExpandida && selectedRow) {
+                        setTimeout(function() {
+                            var toggler = selectedRow.querySelector('.ui-row-toggler');
+                            if (toggler) {
+                                toggler.click();
+                            }
+                        }, 100);
+                    }
+                }, 50);
+            }
+            //]]>
+        </script>
     </ui:define>
-
+    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
+    <ui:define name="nombrePagina">Home</ui:define>
     <ui:define name="contenido">
-        
-        <h:form id="form">
-            <p:growl id="messages" showDetail="true" life="5000" />
 
-            <div class="grid">
-                <!-- Panel de Bienvenida -->
-                <div class="col-12">
-                    <p:panel header="Bienvenido al Sistema">
-                        <div class="text-center p-4">
-                            <i class="pi pi-check-circle" style="font-size: 4rem; color: #22c55e;"></i>
-                            <h2 class="mt-3">¡Bienvenido, #{loginMB.username}!</h2>
-                            <p class="text-600 text-lg">Sistema de Control de Precios</p>
-                        </div>
-                    </p:panel>
+        <p:growl id="messages" showDetail="true" life="5000" />
+
+        <p:panel header="Paso 1: Selecciona Tipo de Cliente" style="margin-bottom: 20px;">
+            <h:form id="formTipos">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <p:commandButton
+                        value="CATÁLOGO"
+                        action="#{clienteController.seleccionarTipoPorNombre('CATALOGO')}"
+                        update=":formClientes"
+                        style="background-color: #2563eb; border-color: #1e40af; color: white; flex: 1; min-width: 200px;"
+                        styleClass="p-button-lg"
+                        icon="pi pi-book" />
+                    <p:commandButton
+                        value="HILOS"
+                        action="#{clienteController.seleccionarTipoPorNombre('HILOS')}"
+                        update=":formClientes"
+                        style="background-color: #2563eb; border-color: #1e40af; color: white; flex: 1; min-width: 200px;"
+                        styleClass="p-button-lg"
+                        icon="pi pi-chart-line" />
+                </div>
+            </h:form>
+        </p:panel>
+
+        <h:form id="formClientes">
+            <p:panel header="Paso 2: Clientes - #{clienteController.tipoSeleccionado.nombre}"
+                     rendered="#{clienteController.tipoSeleccionado != null}"
+                     style="margin-bottom: 20px;">
+
+                <div class="mb-3" style="display: flex; gap: 0.5rem;">
+                    <p:commandButton
+                        value="Nuevo Cliente"
+                        icon="pi pi-plus"
+                        type="button"
+                        onclick="PF('dlgNuevoCliente').show()"
+                        styleClass="p-button-success"
+                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}" />
+                    <p:commandButton
+                        value="Importar Excel"
+                        icon="pi pi-upload"
+                        type="button"
+                        onclick="PF('dlgImportarExcelHome').show(); return false;"
+                        styleClass="p-button-info"
+                        rendered="#{request.isUserInRole('ROLE_ADMIN')}" />
+                    <p:commandButton
+                        value="Eliminar Cliente"
+                        icon="pi pi-trash"
+                        action="#{clienteController.eliminarCliente(clienteProductoController.clienteSeleccionadoId)}"
+                        update=":formClientes :formProductosCliente :messages"
+                        styleClass="p-button-danger"
+                        rendered="#{(request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')) and clienteProductoController.clienteSeleccionadoId != null}">
+                        <p:confirm header="Confirmar Eliminación"
+                                 message="¿Está seguro de eliminar este cliente? Esta acción no se puede deshacer."
+                                 icon="pi pi-exclamation-triangle" />
+                    </p:commandButton>
                 </div>
 
-                <!-- Accesos Rápidos -->
-                <div class="col-12 lg:col-4">
-                    <p:panel header="Accesos Rápidos">
-                        <div class="flex flex-column gap-3">
-                            <p:button value="📦 Productos" 
-                                    icon="pi pi-box"
-                                    outcome="/pages/products.xhtml"
-                                    styleClass="p-button-raised p-button-primary w-full" />
-                            
-                            <p:button value="💰 Cotizaciones" 
-                                    icon="pi pi-dollar"
-                                    outcome="/pages/cotizaciones.xhtml"
-                                    styleClass="p-button-raised p-button-success w-full" />
-                            
-                            <p:button value="👥 Usuarios" 
-                                    icon="pi pi-user-edit"
-                                    outcome="/pages/create_users.xhtml"
-                                    styleClass="p-button-raised p-button-danger w-full"
-                                    rendered="#{request.isUserInRole('ROLE_ADMIN')}" />
-                        </div>
-                    </p:panel>
-                </div>
+                <p:dataTable
+                    value="#{clienteController.clientesFiltrados}"
+                    var="cliente"
+                    emptyMessage="No hay clientes para este tipo. Crea uno nuevo."
+                    styleClass="p-datatable-striped p-datatable-hoverable-rows"
+                    paginator="true"
+                    rows="10"
+                    selectionMode="single"
+                    rowKey="#{cliente.idCliente}"
+                    selection="#{clienteProductoController.clienteSeleccionadoObj}">
 
-                <!-- Gestión de Clientes (USANDO TU ClienteController) -->
-                <div class="col-12 lg:col-8" id="clienteSection">
-                    <p:panel header="Gestión de Clientes">
-                        
-                        <!-- Vista: Selección de Tipo de Cliente -->
-                        <p:panel rendered="#{clienteController.tipoSeleccionado == null}">
-                            <f:facet name="header">
-                                <div class="flex align-items-center">
-                                    <i class="pi pi-users mr-2"></i>
-                                    <span class="font-bold">Seleccione el Tipo de Cliente</span>
-                                </div>
-                            </f:facet>
+                    <p:ajax event="rowSelect"
+                            listener="#{clienteProductoController.onClienteRowSelect}"
+                            update=":formClientes :formProductosCliente"
+                            immediate="true"
+                            process="@this" />
 
-                            <div class="grid">
-                                <ui:repeat value="#{clienteController.tiposCliente}" var="tipo">
-                                    <div class="col-12">
-                                        <p:commandButton 
-                                            value="#{tipo.nombre}" 
-                                            icon="pi pi-folder-open"
-                                            action="#{clienteController.seleccionarTipo(tipo)}"
-                                            update=":form:clienteSection"
-                                            styleClass="w-full p-button-outlined mb-2" />
-                                    </div>
-                                </ui:repeat>
-                            </div>
-                        </p:panel>
+                    <p:column headerText="Nombre" sortBy="#{cliente.nombre}">
+                        <h:outputText value="#{cliente.nombre}" />
+                    </p:column>
 
-                        <!-- Vista: Lista de Clientes del Tipo Seleccionado -->
-                        <p:panel rendered="#{clienteController.tipoSeleccionado != null}">
-                            <f:facet name="header">
-                                <div class="flex align-items-center justify-content-between">
-                                    <div class="flex align-items-center">
-                                        <i class="pi pi-list mr-2"></i>
-                                        <span class="font-bold">Clientes - #{clienteController.tipoSeleccionado.nombre}</span>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <p:commandButton 
-                                            value="Nuevo Cliente" 
-                                            icon="pi pi-plus"
-                                            action="#{clienteController.abrirDialogCrear()}"
-                                            update="dialogCrearCliente"
-                                            oncomplete="PF('dialogCrearCliente').show()"
-                                            styleClass="p-button-success p-button-sm" />
-                                        
-                                        <p:commandButton 
-                                            value="Volver" 
-                                            icon="pi pi-arrow-left"
-                                            action="#{clienteController.volverATipos()}"
-                                            update=":form:clienteSection"
-                                            styleClass="p-button-secondary p-button-sm" />
-                                    </div>
-                                </div>
-                            </f:facet>
+                    <p:column headerText="Email" sortBy="#{cliente.correo}">
+                        <h:outputText value="#{cliente.correo}" />
+                    </p:column>
 
-                            <p:dataTable 
-                                value="#{clienteController.clientesFiltrados}" 
-                                var="cliente"
-                                emptyMessage="No hay clientes registrados para este tipo"
-                                paginator="true"
-                                rows="5"
-                                styleClass="p-datatable-sm">
-                                
-                                <p:column headerText="ID" style="width: 80px">
-                                    <h:outputText value="#{cliente.idCliente}" />
-                                </p:column>
+                    <p:column headerText="Fecha Creación">
+                        <h:outputText value="#{cliente.creadoEn}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
 
-                                <p:column headerText="Nombre" sortBy="#{cliente.nombre}">
-                                    <h:outputText value="#{cliente.nombre}" />
-                                </p:column>
-
-                                <p:column headerText="Correo" sortBy="#{cliente.correo}">
-                                    <h:outputText value="#{cliente.correo}" />
-                                </p:column>
-
-                                <p:column headerText="Tipo">
-                                    <p:badge value="#{cliente.clienteTipo.nombre}" severity="info" />
-                                </p:column>
-
-                                <p:column headerText="Fecha Creación">
-                                    <h:outputText value="#{cliente.creadoEn}">
-                                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
-                                    </h:outputText>
-                                </p:column>
-                            </p:dataTable>
-                        </p:panel>
-
-                    </p:panel>
-                </div>
-            </div>
+            </p:panel>
         </h:form>
 
-        <!-- Dialog para Crear Cliente -->
-        <p:dialog 
-            id="dialogCrearCliente"
-            header="Crear Nuevo Cliente" 
-            widgetVar="dialogCrearCliente" 
-            modal="true"
-            width="500"
-            visible="#{clienteController.mostrarDialogCrear}">
-            
-            <h:form id="formCrearCliente">
-                <p:growl id="messagesDialog" showDetail="true" />
-                
+        <p:dialog header="Crear Nuevo Cliente - #{clienteController.tipoSeleccionado.nombre}" 
+                  widgetVar="dlgNuevoCliente" 
+                  modal="true" 
+                  width="500">
+            <h:form id="formNuevoCliente">
                 <div class="p-fluid">
                     <div class="p-field mb-3">
-                        <label for="nombre" class="font-bold">Nombre del Cliente *</label>
-                        <p:inputText 
-                            id="nombre"
-                            value="#{clienteController.nuevoCliente.nombre}"
-                            placeholder="Ingrese el nombre del cliente"
-                            required="true" />
+                        <p:outputLabel value="Nombre del Cliente:" for="nombreCliente" />
+                        <p:inputText id="nombreCliente"
+                                   value="#{clienteController.nuevoCliente.nombre}"
+                                   required="true" />
                     </div>
 
                     <div class="p-field mb-3">
-                        <label for="correo" class="font-bold">Correo Electrónico *</label>
-                        <p:inputText 
-                            id="correo"
-                            value="#{clienteController.nuevoCliente.correo}"
-                            placeholder="cliente@empresa.com"
-                            required="true" />
+                        <p:outputLabel value="Correo Electrónico (Opcional):" for="correoCliente" />
+                        <p:inputText id="correoCliente"
+                                   value="#{clienteController.nuevoCliente.correo}" />
                     </div>
 
-                    <div class="p-field mb-4">
-                        <label class="font-bold">Tipo de Cliente</label>
-                        <p:badge 
-                            value="#{clienteController.tipoSeleccionado.nombre}" 
-                            severity="success"
-                            styleClass="text-xl" />
-                    </div>
-
-                    <div class="flex gap-2 justify-content-end mt-4">
+                    <div class="flex gap-2 mt-4">
                         <p:commandButton 
                             value="Cancelar" 
                             icon="pi pi-times"
-                            onclick="PF('dialogCrearCliente').hide()"
+                            onclick="PF('dlgNuevoCliente').hide()"
                             styleClass="p-button-secondary"
-                            type="button" />
+                            immediate="true" />
                         
                         <p:commandButton 
-                            value="Crear" 
+                            value="Guardar Cliente" 
                             icon="pi pi-check"
                             action="#{clienteController.crearCliente()}"
-                            update=":form:clienteSection, messagesDialog, :form:messages"
-                            oncomplete="if (args.validationFailed) return; PF('dialogCrearCliente').hide();"
+                            update=":formClientes :messages"
+                            oncomplete="if(args.validationFailed) {return;} PF('dlgNuevoCliente').hide();"
                             styleClass="p-button-success" />
                     </div>
                 </div>
             </h:form>
         </p:dialog>
 
+        <h:form id="formProductosCliente">
+            <!-- Poll para sincronización automática cada 10 segundos (no actualiza si hay fila expandida) -->
+            <p:poll interval="10"
+                    listener="#{clienteProductoController.refrescarSiNoHayEdicion()}"
+                    autoStart="true"
+                    rendered="#{clienteProductoController.clienteSeleccionadoId != null}"
+                    global="false" />
+
+            <p:panel header="Paso 3: Productos del Cliente"
+                     rendered="#{clienteProductoController.clienteSeleccionadoId != null}"
+                     style="margin-bottom: 20px;">
+
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 15px; align-items: flex-end;">
+                    <div>
+                        <p:outputLabel value="Buscar (Estilo/Código):" for="busqueda" />
+                        <p:inputText id="busqueda"
+                                   value="#{clienteProductoController.terminoBusqueda}"
+                                   maxlength="8"
+                                   style="width: 150px;" />
+                    </div>
+                    <p:commandButton value="Buscar"
+                                   icon="pi pi-search"
+                                   action="#{clienteProductoController.buscarProductos()}"
+                                   update=":formProductosCliente:tablaProductosCliente"
+                                   styleClass="p-button-primary" />
+                    <p:commandButton value="Agregar"
+                                   icon="pi pi-plus"
+                                   action="#{clienteProductoController.cargarProductosDisponibles()}"
+                                   update=":formNuevoProductoClienteHome"
+                                   oncomplete="PF('dlgNuevoProductoCliente').show();"
+                                   styleClass="p-button-success" />
+                    <p:commandButton value="Envio de precios"
+                                   icon="pi pi-file-excel"
+                                   type="button"
+                                   onclick="PF('dlgInforme').show(); return false;"
+                                   styleClass="p-button-info"
+                                   title="Generar informe de precios pendientes en Excel" />
+                </div>
+
+                <p:dataTable id="tablaProductosCliente"
+                            widgetVar="widgetTablaProductosCliente"
+                            value="#{clienteProductoController.productosAgrupados}"
+                            var="prod"
+                            rowKey="#{prod.idClienteProducto}"
+                            selectionMode="single"
+                            selection="#{clienteProductoController.productoSeleccionadoFila}"
+                            emptyMessage="No hay productos para este cliente"
+                            styleClass="p-datatable-striped p-datatable-sm tabla-productos-expandible"
+                            paginator="true"
+                            rows="15"
+                            style="font-size: 0.85rem;">
+
+                    <p:ajax event="rowSelect"
+                            listener="#{clienteProductoController.onProductoRowSelect}"
+                            update=":formProductosCliente:footerAccionesEstilo" />
+                    <p:ajax event="rowToggle" listener="#{clienteProductoController.onRowToggle}" />
+
+                    <!-- Columna oculta con rowToggler (necesario para la funcionalidad de expansión) -->
+                    <p:column style="width: 1px; min-width: 1px; max-width: 1px; padding: 0; overflow: hidden;">
+                        <p:rowToggler style="width: 0; height: 0; opacity: 0; position: absolute;" />
+                    </p:column>
+
+                    <p:column headerText="Cód. Estilo" sortBy="#{prod.codigoEstilo}" style="width: 100px;">
+                        <h:outputText value="#{prod.codigoEstilo}" style="font-weight: 600;" />
+                    </p:column>
+
+                    <p:column headerText="Descripción" sortBy="#{prod.descripcionProducto}">
+                        <h:outputText value="#{prod.descripcionProducto}"
+                                     title="#{prod.descripcionProducto}"
+                                     style="display: block; white-space: normal; word-wrap: break-word;" />
+                    </p:column>
+
+                    <p:column headerText="Estilo Cliente" sortBy="#{prod.estiloCliente}" style="width: 120px;">
+                        <h:outputText value="#{prod.estiloCliente}" style="font-weight: 600; color: #2196F3;" />
+                    </p:column>
+
+                    <p:column headerText="Observaciones" sortBy="#{prod.observacionesCliente}" style="width: 180px;">
+                        <h:outputText value="#{prod.observacionesCliente}" rendered="#{prod.observacionesCliente != null and prod.observacionesCliente != ''}" style="font-size: 0.85rem;" />
+                        <h:outputText value="-" rendered="#{prod.observacionesCliente == null or prod.observacionesCliente == ''}" style="color: #999;" />
+                    </p:column>
+
+                    <p:column headerText="Fecha/Agregado" sortBy="#{prod.creadoEn}" style="width: 100px; text-align: center;">
+                        <h:outputText value="#{prod.creadoEn}" rendered="#{prod.creadoEn != null}">
+                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                        </h:outputText>
+                        <h:outputText value="-" rendered="#{prod.creadoEn == null}" style="color: #999;" />
+                    </p:column>
+
+                    <p:column headerText="Colores" style="width: 80px; text-align: center;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                            <span class="badge-colores">
+                                #{prod.totalColores}
+                            </span>
+                            <small style="color: #666; font-size: 0.75rem;">#{prod.coloresConPrecio} con $</small>
+                        </div>
+                    </p:column>
+
+                    <p:column headerText="Estado" style="width: 110px; text-align: center;">
+                        <h:panelGroup rendered="#{prod.estadoGeneral == 'APROBADO'}">
+                            <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; background: #4caf50; color: white; font-weight: 600;">
+                                APROBADO
+                            </span>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{prod.estadoGeneral == 'PENDIENTE'}">
+                            <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; background: #ff9800; color: white; font-weight: 600;">
+                                PENDIENTE
+                            </span>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{prod.estadoGeneral == 'DESAPROBADO'}">
+                            <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; background: #f44336; color: white; font-weight: 600;">
+                                DESAPROBADO
+                            </span>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{prod.estadoGeneral == 'NEGOCIANDO'}">
+                            <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; background: #00bcd4; color: white; font-weight: 600;">
+                                NEGOCIANDO
+                            </span>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{prod.estadoGeneral == 'CERRADO'}">
+                            <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; background: #607d8b; color: white; font-weight: 600;">
+                                CERRADO
+                            </span>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{prod.estadoGeneral == 'SIN PRECIO'}">
+                            <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; background: #9e9e9e; color: white; font-weight: 600;">
+                                SIN PRECIO
+                            </span>
+                        </h:panelGroup>
+                    </p:column>
+
+                    <!-- Contenido expandible con los colores del producto -->
+                    <p:rowExpansion>
+                        <div class="expansion-colores">
+                            <h:panelGroup id="panelColoresExpansion" layout="block">
+                                <!-- Filtro de colores -->
+                                <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                                    <i class="pi pi-search" style="color: #cc72e7;"></i>
+                                    <p:inputText value="#{clienteProductoController.filtroColor}"
+                                               style="width: 250px;"
+                                               placeholder="Buscar por color o código...">
+                                        <p:ajax event="keyup"
+                                                update="@parent:@parent:panelColoresExpansion"
+                                                listener="#{clienteProductoController.filtrarColores()}" />
+                                    </p:inputText>
+                                    <p:commandButton icon="pi pi-times"
+                                                   styleClass="p-button-text p-button-secondary"
+                                                   style="padding: 5px;"
+                                                   rendered="#{not empty clienteProductoController.filtroColor}"
+                                                   action="#{clienteProductoController.limpiarFiltroColor()}"
+                                                   update="panelColoresExpansion" />
+                                </div>
+                                <!-- Tabla de colores -->
+                                <p:dataTable id="tablaColoresExp"
+                                            value="#{clienteProductoController.coloresFiltrados}"
+                                            var="color"
+                                            emptyMessage="No hay colores disponibles para este producto"
+                                            styleClass="p-datatable-sm tabla-colores-expansion"
+                                            editable="true"
+                                            editMode="cell"
+                                            style="min-width: 900px;">
+
+                                <p:column headerText="Color" style="width: 140px;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <p:selectBooleanCheckbox value="#{color.seleccionado}"
+                                                                 disabled="#{color.nombreEstado == 'CERRADO'}">
+                                            <p:ajax listener="#{clienteProductoController.toggleSeleccionColor(color)}"
+                                                    update=":formProductosCliente:tablaProductosCliente" />
+                                        </p:selectBooleanCheckbox>
+                                        <span class="color-muestra" style="background-color: #{color.codigoHex};"></span>
+                                        <h:outputText value="#{color.nombreColor}" style="font-weight: 600; font-size: 0.85rem;" />
+                                    </div>
+                                </p:column>
+
+                                <p:column headerText="Código" style="width: 70px;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <p:cellEditor rendered="#{(request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')) and color.nombreEstado != 'DESAPROBADO' and color.nombreEstado != 'CERRADO'}">
+                                        <f:facet name="output">
+                                            <h:outputText value="#{color.codigoColor}" rendered="#{color.codigoColor != null and color.codigoColor != ''}" />
+                                            <h:outputText value="-" rendered="#{color.codigoColor == null or color.codigoColor == ''}" style="color: #999;" />
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputText value="#{color.codigoColor}" style="width: 100%;" />
+                                        </f:facet>
+                                    </p:cellEditor>
+                                    <h:outputText value="#{color.codigoColor}" rendered="#{(color.nombreEstado == 'DESAPROBADO' or color.nombreEstado == 'CERRADO' or request.isUserInRole('ROLE_CONSULTA')) and color.codigoColor != null and color.codigoColor != ''}" />
+                                    <h:outputText value="-" rendered="#{(color.nombreEstado == 'DESAPROBADO' or color.nombreEstado == 'CERRADO' or request.isUserInRole('ROLE_CONSULTA')) and (color.codigoColor == null or color.codigoColor == '')}" style="color: #999;" />
+                                </p:column>
+
+                                <p:column headerText="Estado" style="width: 90px; text-align: center;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <h:panelGroup id="badgeEstadoExp">
+                                        <h:outputText value="APROBADO" rendered="#{color.nombreEstado == 'APROBADO'}"
+                                                     style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #4caf50; color: white; font-weight: 600;" />
+                                        <h:outputText value="PENDIENTE" rendered="#{color.nombreEstado == 'PENDIENTE'}"
+                                                     style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #ff9800; color: white; font-weight: 600;" />
+                                        <h:outputText value="NEGOCIANDO" rendered="#{color.nombreEstado == 'NEGOCIANDO'}"
+                                                     style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #2196F3; color: white; font-weight: 600;" />
+                                        <h:outputText value="DESAPROBADO" rendered="#{color.nombreEstado == 'DESAPROBADO'}"
+                                                     style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #f44336; color: white; font-weight: 600;" />
+                                        <h:outputText value="CERRADO" rendered="#{color.nombreEstado == 'CERRADO'}"
+                                                     style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #607d8b; color: white; font-weight: 600;" />
+                                        <h:outputText value="SIN PRECIO" rendered="#{color.nombreEstado == null or color.nombreEstado == '' or color.nombreEstado == 'SIN PRECIO'}"
+                                                     style="padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; background: #9e9e9e; color: white; font-weight: 600;" />
+                                    </h:panelGroup>
+                                </p:column>
+
+                                <p:column headerText="Precio" style="width: 90px;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <h:panelGroup rendered="#{(request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS')) and color.nombreEstado != 'DESAPROBADO' and color.nombreEstado != 'CERRADO'}">
+                                        <p:inputNumber value="#{color.valorInicial}"
+                                                     symbol="$ "
+                                                     symbolPosition="p"
+                                                     decimalPlaces="0"
+                                                     style="width: 100px;"
+                                                     onkeydown="if(event.key === 'Enter') { this.blur(); return false; }">
+                                            <p:ajax event="blur" listener="#{clienteProductoController.guardarPrecioDirecto(color)}"
+                                                   process="@this"
+                                                   update="@parent:@parent:badgeEstadoExp :messages" />
+                                        </p:inputNumber>
+                                    </h:panelGroup>
+                                    <h:outputText value="#{color.valorInicial}" rendered="#{(request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS')) and (color.nombreEstado == 'DESAPROBADO' or color.nombreEstado == 'CERRADO') and color.valorInicial != null}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " minFractionDigits="0" maxFractionDigits="0" />
+                                    </h:outputText>
+                                    <h:outputText value="#{color.valorInicial}" rendered="#{(request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_CONSULTA')) and color.valorInicial != null}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " minFractionDigits="0" maxFractionDigits="0" />
+                                    </h:outputText>
+                                    <h:outputText value="-" rendered="#{color.valorInicial == null and ((request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_CONSULTA')) or (color.nombreEstado == 'DESAPROBADO' or color.nombreEstado == 'CERRADO'))}" style="color: #999;" />
+                                </p:column>
+
+                                <p:column headerText="P.Negoc" style="width: 80px;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <h:panelGroup rendered="#{(request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS')) and color.nombreEstado == 'NEGOCIANDO'}">
+                                        <p:inputNumber value="#{color.valorNegociado}"
+                                                     symbol="$ "
+                                                     symbolPosition="p"
+                                                     decimalPlaces="0"
+                                                     style="width: 90px;"
+                                                     onkeydown="if(event.key === 'Enter') { this.blur(); return false; }">
+                                            <p:ajax event="blur" listener="#{clienteProductoController.guardarPrecioDirecto(color)}"
+                                                   process="@this"
+                                                   update="@parent:@parent:badgeEstadoExp :messages" />
+                                        </p:inputNumber>
+                                    </h:panelGroup>
+                                    <h:outputText value="#{color.valorNegociado}" rendered="#{color.valorNegociado != null and color.nombreEstado != 'NEGOCIANDO'}" style="font-weight: 600; color: #e67e22;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " minFractionDigits="0" maxFractionDigits="0" />
+                                    </h:outputText>
+                                    <h:outputText value="-" rendered="#{color.valorNegociado == null and color.nombreEstado != 'NEGOCIANDO'}" style="color: #999;" />
+                                    <h:outputText value="#{color.valorNegociado}" rendered="#{(request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_CONSULTA')) and color.nombreEstado == 'NEGOCIANDO' and color.valorNegociado != null}" style="font-weight: 600; color: #e67e22;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " minFractionDigits="0" maxFractionDigits="0" />
+                                    </h:outputText>
+                                    <h:outputText value="-" rendered="#{(request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_CONSULTA')) and color.nombreEstado == 'NEGOCIANDO' and color.valorNegociado == null}" style="color: #999;" />
+                                </p:column>
+
+                                <p:column headerText="Fecha" style="width: 80px; text-align: center;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <h:outputText value="#{color.fechaSolicitud}" rendered="#{color.fechaSolicitud != null}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" />
+                                    </h:outputText>
+                                    <h:outputText value="-" rendered="#{color.fechaSolicitud == null}" style="color: #999;" />
+                                </p:column>
+
+                                <p:column headerText="Vigencia" style="width: 80px; text-align: center;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <h:outputText value="#{color.vigenciaFinal}" rendered="#{color.vigenciaFinal != null}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" />
+                                    </h:outputText>
+                                    <h:outputText value="-" rendered="#{color.vigenciaFinal == null}" style="color: #999;" />
+                                </p:column>
+
+                                <p:column headerText="Obs" style="width: 120px;" headerStyle="background-color: #dbeafe; color: #1e40af;">
+                                    <p:cellEditor rendered="#{(request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS')) and color.nombreEstado != 'DESAPROBADO' and color.nombreEstado != 'CERRADO'}">
+                                        <f:facet name="output">
+                                            <div style="word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
+                                                <h:outputText value="#{clienteProductoController.formatearObservacion(color.observaciones)}" escape="false" rendered="#{color.observaciones != null and color.observaciones != ''}" style="font-size: 0.8rem;" />
+                                                <h:outputText value="-" rendered="#{color.observaciones == null or color.observaciones == ''}" style="color: #999;" />
+                                            </div>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputText value="#{color.observaciones}" style="width: 100%;" />
+                                        </f:facet>
+                                    </p:cellEditor>
+                                    <div style="word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">
+                                        <h:outputText value="#{clienteProductoController.formatearObservacion(color.observaciones)}" escape="false" rendered="#{(color.nombreEstado == 'DESAPROBADO' or color.nombreEstado == 'CERRADO' or request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_CONSULTA')) and color.observaciones != null and color.observaciones != ''}" style="font-size: 0.8rem;" />
+                                        <h:outputText value="-" rendered="#{(color.nombreEstado == 'DESAPROBADO' or color.nombreEstado == 'CERRADO' or request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_CONSULTA')) and (color.observaciones == null or color.observaciones == '')}" style="color: #999;" />
+                                    </div>
+                                </p:column>
+
+                                <p:ajax event="cellEdit" listener="#{clienteProductoController.onCellEdit}" update=":messages" />
+
+                            </p:dataTable>
+                            </h:panelGroup>
+
+                            <!-- Footer con acciones de COLORES solamente -->
+                            <h:panelGroup layout="block" rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}"
+                                          style="display: flex; justify-content: center; width: 100%; padding: 15px 20px; background: #f8f9fa; border-top: 1px solid #e0e0e0; gap: 10px;">
+                                    <p:commandButton
+                                        icon="pi pi-check-square"
+                                        value="#{clienteProductoController.todosSeleccionados ? 'Ninguno' : 'Todos'}"
+                                        style="background-color: #3b82f6; border-color: #2563eb; color: white;"
+                                        action="#{clienteProductoController.toggleSeleccionarTodos()}"
+                                        update=":formProductosCliente:tablaProductosCliente" />
+                                    <p:commandButton
+                                        icon="pi pi-plus"
+                                        value="Agregar Color"
+                                        style="background-color: #3b82f6; border-color: #2563eb; color: white;"
+                                        update=":formAgregarColorAdicional"
+                                        oncomplete="PF('dlgAgregarColorAdicional').show();"
+                                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_CATALOGO')}" />
+                                    <p:commandButton
+                                        icon="pi pi-dollar"
+                                        value="Asignar Precio"
+                                        style="background-color: #28a745; border-color: #28a745; color: white;"
+                                        action="#{clienteProductoController.abrirAsignacionPrecioSeleccionados()}"
+                                        update=":messages :formAsignarSeleccionados"
+                                        oncomplete="if(!args.validationFailed) PF('dlgAsignarSeleccionados').show();"
+                                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS')}" />
+                                    <p:commandButton
+                                        icon="pi pi-calendar"
+                                        value="Cambiar Vigencia"
+                                        style="background-color: #7b1fa2; border-color: #6a1b9a; color: white;"
+                                        action="#{clienteProductoController.abrirCambioVigencia()}"
+                                        update=":messages"
+                                        rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS')}" />
+                                    <p:menuButton value="Estado" icon="pi pi-tags"
+                                                  styleClass="btn-azul-solido"
+                                                  rendered="#{request.isUserInRole('ROLE_CATALOGO')}">
+                                        <p:menuitem value="Aprobado" icon="pi pi-check-circle"
+                                                   action="#{clienteProductoController.prepararCambioEstado('APROBADO')}"
+
+                                                   update=":formProductosCliente:tablaProductosCliente :messages" />
+
+                                        <p:menuitem value="Negociando" icon="pi pi-comments"
+                                                   action="#{clienteProductoController.prepararCambioEstado('NEGOCIANDO')}"
+                                                   update=":messages :formCambioEstado"
+                                                   oncomplete="if(!args.validationFailed) PF('dlgCambioEstado').show();" />
+                                    </p:menuButton>
+                            </h:panelGroup>
+                        </div>
+                    </p:rowExpansion>
+
+                </p:dataTable>
+
+            </p:panel>
+
+            <h:panelGroup id="footerAccionesEstilo" layout="block"
+                          rendered="#{clienteProductoController.clienteSeleccionadoId != null}"
+                          style="display: flex; justify-content: center; align-items: center; width: 100%; padding: 15px 20px; background: #f8f9fa; border-top: 1px solid #e0e0e0; gap: 10px;">
+                <p:commandButton
+                    icon="pi pi-image"
+                    value="Ver Imagen"
+                    action="#{clienteProductoController.seleccionarProductoParaVerImagen(clienteProductoController.productoSeleccionadoFila)}"
+                    oncomplete="PF('dlgVerImagenHome').show()"
+                    update=":dlgVerImagenHome"
+                    styleClass="p-button-info"
+                    disabled="#{clienteProductoController.productoSeleccionadoFila == null or clienteProductoController.productoSeleccionadoFila.imagenProducto == null}" />
+                <p:commandButton
+                    icon="pi pi-pencil"
+                    value="Editar"
+                    action="#{clienteProductoController.prepararEdicionProducto(clienteProductoController.productoSeleccionadoFila)}"
+                    oncomplete="PF('dlgEditarProductoHome').show()"
+                    update=":formEditarProductoHome"
+                    styleClass="p-button-info"
+                    disabled="#{clienteProductoController.productoSeleccionadoFila == null}"
+                    rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_CATALOGO')}" />
+                <p:commandButton
+                    icon="pi pi-trash"
+                    value="Eliminar"
+                    action="#{clienteProductoController.eliminarProductoDeCliente(clienteProductoController.productoSeleccionadoFila.idClienteProducto)}"
+                    update=":formProductosCliente:tablaProductosCliente :formProductosCliente:footerAccionesEstilo :messages"
+                    styleClass="p-button-danger"
+                    disabled="#{clienteProductoController.productoSeleccionadoFila == null}"
+                    rendered="#{request.isUserInRole('ROLE_ADMIN') or request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_CATALOGO')}">
+                    <p:confirm header="Confirmar Eliminación"
+                             message="¿Está seguro de eliminar este producto del cliente?"
+                             icon="pi pi-exclamation-triangle" />
+                </p:commandButton>
+            </h:panelGroup>
+        </h:form>
+
+        <p:dialog header="Agregar Producto al Cliente"
+                  widgetVar="dlgNuevoProductoCliente"
+                  modal="true"
+                  width="900"
+                  height="600"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formNuevoProductoClienteHome">
+                <div style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                    <div class="p-fluid">
+                        <div class="grid mb-3">
+                        <div class="col-12">
+                            <p:outputLabel value="Filtrar por Código (Estilo o Prototipo):" for="filtroCodigoHome" />
+                            <p:inputText id="filtroCodigoHome"
+                                       value="#{clienteProductoController.filtroCodigoEstilo}"
+                                       style="width: 200px;">
+                                <p:ajax event="keyup"
+                                       update="tablaSeleccionProductoHome"
+                                       delay="300" />
+                            </p:inputText>
+                            
+                        </div>
+                    </div>
+
+                    <p:dataTable id="tablaSeleccionProductoHome"
+                                value="#{clienteProductoController.productosFiltrados}"
+                                var="prod"
+                                selection="#{clienteProductoController.productoSeleccionado}"
+                                selectionMode="single"
+                                rowKey="#{prod.idProducto}"
+                                emptyMessage="No se encontraron productos"
+                                paginator="true"
+                                rows="5"
+                                styleClass="p-datatable-sm"
+                                style="margin-bottom: 1rem;">
+
+                        <p:ajax event="rowSelect"
+                               listener="#{clienteProductoController.onProductoSelect}"
+                               update="@form:containerDatosProductoHome @form:panelColoresAsignar @form:botonesDialogoHome" />
+
+                        <p:column headerText="Código Estilo" style="width: 120px;" sortBy="#{prod.codigoEstilo}">
+                            <h:outputText value="#{prod.codigoEstilo}" />
+                        </p:column>
+
+                        <p:column headerText="Código Prototipo" style="width: 130px;" sortBy="#{prod.codigoPrototipo}">
+                            <h:outputText value="#{prod.codigoPrototipo}" />
+                        </p:column>
+
+                        <p:column headerText="Descripción" sortBy="#{prod.descripcion}">
+                            <h:outputText value="#{prod.descripcion}" />
+                        </p:column>
+                    </p:dataTable>
+
+                    <h:panelGroup id="containerDatosProductoHome" />
+
+                    <h:panelGroup id="panelColoresAsignar" />
+                    </div>
+                </div>
+
+                <h:panelGroup id="botonesDialogoHome">
+                    <div class="flex gap-2 mt-3" style="padding-top: 10px; border-top: 1px solid #ddd;">
+                        <p:commandButton value="Cancelar"
+                                       icon="pi pi-times"
+                                       onclick="PF('dlgNuevoProductoCliente').hide(); return false;"
+                                       styleClass="p-button-secondary"
+                                       immediate="true" />
+
+                        <p:commandButton value="Agregar Producto"
+                                       icon="pi pi-check"
+                                       action="#{clienteProductoController.agregarProductoACliente()}"
+                                       process="@form"
+                                       update=":formProductosCliente:tablaProductosCliente :messages"
+                                       oncomplete="if(!args.validationFailed) PF('dlgNuevoProductoCliente').hide();"
+                                       styleClass="p-button-success"
+                                       disabled="#{clienteProductoController.productoSeleccionado == null}" />
+                    </div>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <!-- Diálogo dlgGestionColores eliminado - funcionalidad movida a p:rowExpansion -->
+
+        <p:dialog header="Asignar Precio a Colores Seleccionados"
+                  widgetVar="dlgAsignarSeleccionados"
+                  modal="true"
+                  width="600"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formAsignarSeleccionados">
+                <div class="p-fluid">
+                    <div style="margin-bottom: 15px; padding: 10px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;">
+                        <p style="margin: 0; color: #1565c0; font-weight: 600;">
+                            Colores seleccionados: #{clienteProductoController.coloresSeleccionados.size()}
+                        </p>
+                    </div>
+
+                    <!-- Selección del tipo de precio -->
+                    <div class="p-field mb-3">
+                        <p:outputLabel value="Aplicar precio a:" style="font-weight: 600;" />
+                        <p:selectOneRadio id="tipoPrecio"
+                                        value="#{clienteProductoController.tipoPrecioAsignar}"
+                                        layout="lineDirection">
+                            <f:selectItem itemLabel="Precio Inicial" itemValue="INICIAL" />
+                            <f:selectItem itemLabel="Precio Negociado" itemValue="NEGOCIADO" />
+                            <p:ajax update="seccionPrecioInicial seccionPrecioNegociado" />
+                        </p:selectOneRadio>
+                    </div>
+
+                    <!-- Sección para Precio Inicial -->
+                    <h:panelGroup id="seccionPrecioInicial" layout="block">
+                        <h:panelGroup rendered="#{clienteProductoController.tipoPrecioAsignar == 'INICIAL'}">
+                            <div class="p-field mb-3">
+                                <p:outputLabel value="Precio Inicial: *" for="precioInicialSel" />
+                                <p:inputNumber id="precioInicialSel"
+                                             value="#{clienteProductoController.precioInicialSeleccionados}"
+                                             symbol="$ "
+                                             decimalPlaces="0"
+                                             style="width: 100%;"
+                                             required="#{clienteProductoController.tipoPrecioAsignar == 'INICIAL'}" />
+                                <small style="color: #6c757d;">Campo obligatorio</small>
+                            </div>
+
+                        </h:panelGroup>
+                    </h:panelGroup>
+
+                    <!-- Sección para Precio Negociado -->
+                    <h:panelGroup id="seccionPrecioNegociado" layout="block">
+                        <h:panelGroup rendered="#{clienteProductoController.tipoPrecioAsignar == 'NEGOCIADO'}">
+                            <div class="p-field mb-3">
+                                <p:outputLabel value="Precio Negociado: *" for="precioNegociadoSel" />
+                                <p:inputNumber id="precioNegociadoSel"
+                                             value="#{clienteProductoController.precioNegociadoSeleccionados}"
+                                             symbol="$ "
+                                             decimalPlaces="0"
+                                             style="width: 100%;"
+                                             required="#{clienteProductoController.tipoPrecioAsignar == 'NEGOCIADO'}" />
+                                <small style="color: #6c757d;">Campo obligatorio - Los colores quedarán en estado NEGOCIANDO</small>
+                            </div>
+                        </h:panelGroup>
+                    </h:panelGroup>
+
+                    <div class="p-field mb-3">
+                        <p:outputLabel value="Observaciones:" for="observacionesSel" />
+                        <p:inputTextarea id="observacionesSel"
+                                       value="#{clienteProductoController.observacionesSeleccionados}"
+                                       rows="2"
+                                       style="width: 100%;" />
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <p:commandButton value="Cancelar"
+                                       icon="pi pi-times"
+                                       onclick="PF('dlgAsignarSeleccionados').hide();"
+                                       styleClass="p-button-secondary"
+                                       type="button" />
+                        <p:commandButton value="Asignar Precio"
+                                       icon="pi pi-check"
+                                       action="#{clienteProductoController.asignarPrecioASeleccionados()}"
+                                       update=":formGestionColores :messages :formProductosCliente:tablaProductosCliente"
+                                       oncomplete="if(!args.validationFailed) PF('dlgAsignarSeleccionados').hide();"
+                                       styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Diálogo para cambio de estado con observación opcional -->
+        <p:dialog header="Cambiar Estado - Observación Opcional"
+                  widgetVar="dlgCambioEstado"
+                  modal="true"
+                  width="600"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formCambioEstado">
+                <div class="p-fluid">
+                    <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                        <p style="margin: 0; color: #856404;">
+                            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+                            <strong>Estado a aplicar:</strong> #{clienteProductoController.estadoPorAplicar}
+                        </p>
+                        <p style="margin: 10px 0 0 0; color: #856404; font-size: 0.9rem;">
+                            Se aplicará a todos los colores seleccionados.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h:outputLabel value="Observación (Opcional):" style="font-weight: 600; display: block; margin-bottom: 8px;" />
+                        <p:inputTextarea id="observacionCambio"
+                                       value="#{clienteProductoController.observacionCambioEstado}"
+                                       rows="4"
+                                       maxlength="500"
+                                       style="width: 100%;" />
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Esta observación se aplicará a todos los colores seleccionados. Es opcional.
+                        </small>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <p:commandButton value="Cancelar"
+                                       icon="pi pi-times"
+                                       onclick="PF('dlgCambioEstado').hide();"
+                                       styleClass="p-button-secondary"
+                                       type="button" />
+                        <p:commandButton value="Confirmar Cambio"
+                                       icon="pi pi-check"
+                                       action="#{clienteProductoController.confirmarCambioEstado()}"
+                                       update=":formProductosCliente:tablaProductosCliente :messages"
+                                       oncomplete="if(!args.validationFailed) PF('dlgCambioEstado').hide();"
+                                       styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Diálogo para agregar color adicional -->
+        <p:dialog header="Agregar Color"
+                  widgetVar="dlgAgregarColorAdicional"
+                  modal="true"
+                  width="450"
+                  closeOnEscape="true">
+            <h:form id="formAgregarColorAdicional">
+                <div class="p-fluid">
+                    <!-- Opción 1: Agregar todos los colores -->
+                    <div style="margin-bottom: 1.5rem; padding: 15px; background: #e8f5e9; border-radius: 8px; border: 1px solid #c8e6c9;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #2e7d32;">
+                            <i class="pi pi-clone" style="margin-right: 8px;"></i>Agregar todos los colores del producto
+                        </p>
+                        <p:commandButton
+                            value="Agregar Todos"
+                            icon="pi pi-plus-circle"
+                            action="#{clienteProductoController.agregarTodosLosColores()}"
+                            update=":formProductosCliente:tablaProductosCliente :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgAgregarColorAdicional').hide();"
+                            styleClass="p-button-success"
+                            style="width: 100%;" />
+                    </div>
+
+                    <div style="text-align: center; margin: 15px 0; color: #666;">
+                        <span style="background: #f5f5f5; padding: 5px 15px; border-radius: 20px;">ó</span>
+                    </div>
+
+                    <!-- Opción 2: Agregar un color específico -->
+                    <div style="padding: 15px; background: #e3f2fd; border-radius: 8px; border: 1px solid #bbdefb;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600; color: #1565c0;">
+                            <i class="pi pi-palette" style="margin-right: 8px;"></i>Agregar un color específico
+                        </p>
+                        <div class="p-field" style="margin-bottom: 1rem;">
+                            <p:selectOneMenu id="colorAdicional"
+                                            value="#{clienteProductoController.colorSeleccionadoParaAgregar}"
+                                            style="width: 100%;">
+                                <f:selectItem itemLabel="-- Seleccione un color --" itemValue="" />
+                                <f:selectItems value="#{clienteProductoController.coloresDisponiblesParaAgregar}"
+                                              var="pc"
+                                              itemLabel="#{pc.color.nombre}"
+                                              itemValue="#{pc.idProductoColor}" />
+                            </p:selectOneMenu>
+                        </div>
+                        <p:commandButton
+                            value="Agregar Color"
+                            icon="pi pi-check"
+                            action="#{clienteProductoController.agregarColorAdicionalSeleccionado()}"
+                            update=":formProductosCliente:tablaProductosCliente :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgAgregarColorAdicional').hide();"
+                            styleClass="p-button-info"
+                            style="width: 100%;" />
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem; justify-content: center;">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgAgregarColorAdicional').hide(); return false;"
+                            styleClass="p-button-secondary"
+                            type="button" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Diálogo de Informe / Descargar Excel -->
+        <p:dialog id="dlgInforme"
+                  header="Envio de precios"
+                  widgetVar="dlgInforme"
+                  modal="true"
+                  width="440"
+                  height="auto"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formInforme">
+                <div style="padding: 12px 8px;">
+
+                    <!-- Selector de fecha única -->
+                    <div style="margin-bottom: 20px;">
+                        <p:outputLabel value="Fecha de asignación del precio:"
+                                      style="display: block; margin-bottom: 8px; font-weight: 600;" />
+                        <p:calendar id="dlgFiltroFecha"
+                                   value="#{clienteProductoController.filtroFecha}"
+                                   pattern="dd/MM/yyyy"
+                                   navigator="true"
+                                   showOn="button"
+                                   showButtonBar="true"
+                                   inputStyle="width: 150px;" />
+                    </div>
+
+                    <!-- Botones de descarga Excel -->
+                    <div style="margin-bottom: 14px;">
+                        <p style="font-weight: 600; margin-bottom: 8px; color: #555;">
+                            <i class="pi pi-file-excel" style="margin-right: 6px; color: #217346;"></i>Descargar Excel:
+                        </p>
+                        <div style="display: flex; gap: 10px;">
+                            <p:commandButton value="Pendientes"
+                                           icon="pi pi-download"
+                                           action="#{clienteProductoController.descargarExcelCliente()}"
+                                           ajax="false"
+                                           styleClass="p-button-warning"
+                                           style="flex: 1;"
+                                           title="Descargar Excel de precios PENDIENTES" />
+                            <p:commandButton value="Negociados"
+                                           icon="pi pi-download"
+                                           action="#{clienteProductoController.descargarExcelClienteNegociado()}"
+                                           ajax="false"
+                                           styleClass="p-button-success"
+                                           style="flex: 1;"
+                                           title="Descargar Excel de precios NEGOCIADOS" />
+                        </div>
+                    </div>
+
+                    <!-- Botones de descarga PDF -->
+                    <div style="margin-bottom: 14px;">
+                        <p style="font-weight: 600; margin-bottom: 8px; color: #555;">
+                            <i class="pi pi-file-pdf" style="margin-right: 6px; color: #c0392b;"></i>Descargar PDF:
+                        </p>
+                        <div style="display: flex; gap: 10px;">
+                            <p:commandButton value="Pendientes"
+                                           icon="pi pi-file-pdf"
+                                           action="#{clienteProductoController.descargarPdfCliente()}"
+                                           ajax="false"
+                                           styleClass="p-button-warning"
+                                           style="flex: 1;"
+                                           title="Descargar PDF de precios PENDIENTES" />
+                            <p:commandButton value="Negociados"
+                                           icon="pi pi-file-pdf"
+                                           action="#{clienteProductoController.descargarPdfClienteNegociado()}"
+                                           ajax="false"
+                                           styleClass="p-button-success"
+                                           style="flex: 1;"
+                                           title="Descargar PDF de precios NEGOCIADOS" />
+                        </div>
+                    </div>
+
+                    <!-- Cancelar -->
+                    <div style="padding-top: 10px; border-top: 1px solid #dee2e6; text-align: right;">
+                        <p:commandButton value="Cancelar"
+                                       icon="pi pi-times"
+                                       onclick="PF('dlgInforme').hide(); return false;"
+                                       styleClass="p-button-secondary" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgVerImagenHome"
+                  header="Imagen del Producto"
+                  widgetVar="dlgVerImagenHome"
+                  modal="true"
+                  width="420"
+                  height="auto"
+                  responsive="true"
+                  closeOnEscape="true"
+                  position="center top"
+                  style="margin-top: 50px;"
+                  appendTo="@(body)"
+                  onShow="resetCarouselHome()">
+            <h:form>
+                <h:panelGroup rendered="#{clienteProductoController.productoParaImagen != null}">
+                    <div style="text-align: center; padding: 10px;">
+                        <h4 style="margin-bottom: 10px; color: #333; font-size: 1rem;">
+                            #{clienteProductoController.productoParaImagen.codigoEstilo} -
+                            #{clienteProductoController.productoParaImagen.descripcion}
+                        </h4>
+
+                        <!-- Carousel con flechas -->
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+
+                            <!-- Flecha izquierda (solo si hay foto 2) -->
+                            <h:panelGroup rendered="#{clienteProductoController.productoParaImagen.imagenProducto2 != null and !clienteProductoController.productoParaImagen.imagenProducto2.isEmpty()}">
+                                <button type="button" onclick="prevFotoHome()"
+                                        style="background: rgba(0,0,0,0.45); color: white; border: none; border-radius: 50%;
+                                               width: 38px; height: 38px; font-size: 1.2rem; cursor: pointer;
+                                               display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    &#10094;
+                                </button>
+                            </h:panelGroup>
+
+                            <!-- Contenedor de imágenes -->
+                            <div>
+                                <div id="divFotoHome1">
+                                    <h:panelGroup rendered="#{clienteProductoController.productoParaImagen.imagenProducto != null and !clienteProductoController.productoParaImagen.imagenProducto.isEmpty()}">
+                                        <h:outputText value="&lt;img src='#{clienteProductoController.obtenerImagenBase64()}' alt='Foto 1' style='max-width: 290px; max-height: 370px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);' /&gt;"
+                                                     escape="false" />
+                                    </h:panelGroup>
+                                </div>
+                                <div id="divFotoHome2" style="display:none;">
+                                    <h:panelGroup rendered="#{clienteProductoController.productoParaImagen.imagenProducto2 != null and !clienteProductoController.productoParaImagen.imagenProducto2.isEmpty()}">
+                                        <h:outputText value="&lt;img src='#{clienteProductoController.obtenerImagenBase64_2()}' alt='Foto 2' style='max-width: 290px; max-height: 370px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);' /&gt;"
+                                                     escape="false" />
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+
+                            <!-- Flecha derecha (solo si hay foto 2) -->
+                            <h:panelGroup rendered="#{clienteProductoController.productoParaImagen.imagenProducto2 != null and !clienteProductoController.productoParaImagen.imagenProducto2.isEmpty()}">
+                                <button type="button" onclick="nextFotoHome()"
+                                        style="background: rgba(0,0,0,0.45); color: white; border: none; border-radius: 50%;
+                                               width: 38px; height: 38px; font-size: 1.2rem; cursor: pointer;
+                                               display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    &#10095;
+                                </button>
+                            </h:panelGroup>
+                        </div>
+
+                        <!-- Indicador de foto (solo si hay foto 2) -->
+                        <h:panelGroup rendered="#{clienteProductoController.productoParaImagen.imagenProducto2 != null and !clienteProductoController.productoParaImagen.imagenProducto2.isEmpty()}">
+                            <div style="margin-top: 8px; color: #666; font-size: 0.85rem;">
+                                <span id="fotoIndicatorHome">Foto 1 / 2</span>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{(clienteProductoController.productoParaImagen.imagenProducto == null or clienteProductoController.productoParaImagen.imagenProducto.isEmpty()) and (clienteProductoController.productoParaImagen.imagenProducto2 == null or clienteProductoController.productoParaImagen.imagenProducto2.isEmpty())}">
+                            <div style="color: #999; font-size: 1rem; padding: 40px 20px;">
+                                <i class="pi pi-image" style="font-size: 3rem; display: block; margin-bottom: 10px; color: #ccc;"></i>
+                                <p style="margin: 0;">Sin imágenes</p>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Editar Producto del Cliente"
+                  widgetVar="dlgEditarProductoHome"
+                  modal="true"
+                  width="600"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formEditarProductoHome">
+                <h:panelGroup rendered="#{clienteProductoController.productoEditando != null}">
+                    <div class="p-fluid">
+                        <div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                            <strong>Producto:</strong> #{clienteProductoController.productoEditando.codigoEstilo} - #{clienteProductoController.productoEditando.descripcionProducto}
+                        </div>
+
+                        <div class="p-field mb-3">
+                            <p:outputLabel value="Estilo del Cliente:" for="estiloClienteEdit" />
+                            <p:inputText id="estiloClienteEdit"
+                                       value="#{clienteProductoController.productoEditando.estiloCliente}"
+                                       style="width: 100%;" />
+                            <small style="color: #6c757d;">Cómo el cliente identifica este producto</small>
+                        </div>
+
+                        <div class="p-field mb-3">
+                            <p:outputLabel value="Observaciones:" for="observacionesEdit" />
+                            <p:inputTextarea id="observacionesEdit"
+                                           value="#{clienteProductoController.productoEditando.observacionesCliente}"
+                                           rows="4"
+                                           style="width: 100%;" />
+                        </div>
+
+                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                            <p:commandButton value="Cancelar"
+                                           icon="pi pi-times"
+                                           onclick="PF('dlgEditarProductoHome').hide();"
+                                           styleClass="p-button-secondary"
+                                           type="button" />
+                            <p:commandButton value="Guardar Cambios"
+                                           icon="pi pi-check"
+                                           action="#{clienteProductoController.actualizarProductoCliente()}"
+                                           update=":formProductosCliente:tablaProductosCliente :messages"
+                                           oncomplete="if(!args.validationFailed) PF('dlgEditarProductoHome').hide();"
+                                           styleClass="p-button-success" />
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <h:form id="confirmForm">
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes p-button-success" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no p-button-secondary" />
+            </p:confirmDialog>
+        </h:form>
+
+        <h:panelGroup rendered="#{request.isUserInRole('ROLE_COSTOS') or request.isUserInRole('ROLE_ADMIN')}">
+            <h:form id="formNotificarFlotante">
+                <p:commandButton
+                    id="btnNotificarFlotante"
+                    icon="pi pi-send"
+                    action="#{clienteProductoController.enviarNotificacionPendientesManual()}"
+                    update=":messages"
+                    title="Notificar Pendientes a CATÁLOGO"
+                    style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+                           width: 56px; height: 56px; border-radius: 50%;
+                           background-color: #f59e0b; border-color: #d97706;
+                           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                           font-size: 1.2rem;" />
+            </h:form>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{request.isUserInRole('ROLE_CATALOGO') or request.isUserInRole('ROLE_ADMIN')}">
+            <h:form id="formNotificarAprobadosFlotante">
+                <p:commandButton
+                    id="btnNotificarAprobados"
+                    icon="pi pi-check-circle"
+                    action="#{clienteProductoController.enviarNotificacionAprobadosManual()}"
+                    update=":messages"
+                    title="Notificar Aprobados a COSTOS"
+                    style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+                           width: 56px; height: 56px; border-radius: 50%;
+                           background-color: #22c55e; border-color: #16a34a;
+                           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                           font-size: 1.2rem;" />
+            </h:form>
+        </h:panelGroup>
+
+        <!-- Diálogo para cambiar vigencia de colores seleccionados -->
+        <p:dialog header="Cambiar Vigencia"
+                  widgetVar="dlgCambiarVigencia"
+                  modal="true"
+                  width="380"
+                  closeOnEscape="true"
+                  appendTo="@(body)">
+            <h:form id="formCambiarVigencia">
+                <div style="padding: 16px;">
+                    <div style="margin-bottom: 16px; padding: 12px; background: #f3e5f5; border-left: 4px solid #7b1fa2; border-radius: 4px;">
+                        <small style="color: #4a148c;">
+                            <i class="pi pi-info-circle" style="margin-right: 5px;"></i>
+                            La vigencia final se calcula desde la <strong>Fecha Inicio</strong> del precio.
+                            La notificación de 2 meses y 5 días se aplicará automáticamente.
+                        </small>
+                    </div>
+
+                    <div class="p-field" style="margin-bottom: 16px;">
+                        <p:outputLabel value="Meses de vigencia:" style="display: block; font-weight: 600; margin-bottom: 6px;" />
+                        <p:selectOneMenu id="mesesVigencia"
+                                         value="#{clienteProductoController.mesesVigencia}"
+                                         style="width: 100%;">
+                            <f:selectItem itemLabel="-- Seleccione --" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItem itemLabel="4 meses"  itemValue="4" />
+                            <f:selectItem itemLabel="5 meses"  itemValue="5" />
+                            <f:selectItem itemLabel="6 meses"  itemValue="6" />
+                            <f:selectItem itemLabel="7 meses"  itemValue="7" />
+                            <f:selectItem itemLabel="8 meses"  itemValue="8" />
+                            <f:selectItem itemLabel="9 meses"  itemValue="9" />
+                            <f:selectItem itemLabel="10 meses" itemValue="10" />
+                            <f:selectItem itemLabel="11 meses" itemValue="11" />
+                        </p:selectOneMenu>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                        <p:commandButton value="Cancelar"
+                                         icon="pi pi-times"
+                                         onclick="PF('dlgCambiarVigencia').hide(); return false;"
+                                         styleClass="p-button-secondary" />
+                        <p:commandButton value="Aplicar"
+                                         icon="pi pi-check"
+                                         action="#{clienteProductoController.cambiarVigenciaSeleccionados()}"
+                                         update=":formProductosCliente:tablaProductosCliente :messages"
+                                         styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- Diálogo para importar productos desde Excel (solo ADMIN) -->
+        <p:dialog header="Importar Productos desde Excel"
+                  widgetVar="dlgImportarExcelHome"
+                  modal="true"
+                  width="550"
+                  closeOnEscape="true"
+                  rendered="#{request.isUserInRole('ROLE_ADMIN')}">
+            <h:form id="formImportarExcelHome" enctype="multipart/form-data">
+                <div class="p-fluid">
+                    <!-- Instrucciones -->
+                    <div style="margin-bottom: 1.5rem; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;">
+                        <h4 style="margin: 0 0 10px 0; color: #1565c0;">
+                            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>Instrucciones
+                        </h4>
+                        <ol style="margin: 0; padding-left: 20px; color: #333;">
+                            <li>Descarga la plantilla Excel</li>
+                            <li>Completa los datos paso a paso: Cliente → Producto → Colores → Precio y Fechas</li>
+                            <li>Sube el archivo completado</li>
+                        </ol>
+                    </div>
+
+                    <!-- Paso 1: Descargar plantilla -->
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Paso 1: Descargar Plantilla" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <p:commandLink ajax="false" style="text-decoration: none;">
+                            <h:outputText value="Descargar plantilla_productos.xlsx" style="color: #059669; font-weight: 600;" />
+                            <p:fileDownload value="#{productoGestionController.plantillaExcel}" />
+                        </p:commandLink>
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Archivo Excel con el formato correcto para importar
+                        </small>
+                    </div>
+
+                    <!-- Paso 2: Subir archivo -->
+                    <div class="p-field" style="margin-bottom: 1.5rem;">
+                        <p:outputLabel value="Paso 2: Subir Archivo Excel" for="excelUploadHome" style="display: block; margin-bottom: 0.5rem; font-weight: 600;" />
+                        <p:fileUpload id="excelUploadHome"
+                                      value="#{productoGestionController.archivoExcel}"
+                                      mode="simple"
+                                      accept=".xlsx,.xls"
+                                      skinSimple="true"
+                                      style="width: 100%;" />
+                        <small style="display: block; margin-top: 0.25rem; color: #6c757d;">
+                            Formatos aceptados: .xlsx, .xls
+                        </small>
+                    </div>
+
+                    <!-- Nota importante -->
+                    <div style="margin-bottom: 1rem; padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
+                        <small style="color: #e65100;">
+                            <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+                            <strong>Nota:</strong> Si un producto ya existe (mismo código y cliente), se omitirá. Si se asigna precio quedará en estado PENDIENTE.
+                        </small>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 2rem; justify-content: flex-end;">
+                        <p:commandButton
+                            value="Cancelar"
+                            icon="pi pi-times"
+                            onclick="PF('dlgImportarExcelHome').hide(); return false;"
+                            styleClass="p-button-secondary" />
+                        <p:commandButton
+                            value="Importar"
+                            icon="pi pi-upload"
+                            action="#{productoGestionController.importarProductosDesdeExcel()}"
+                            update=":formProductosCliente:tablaProductosCliente :messages"
+                            oncomplete="if(!args.validationFailed) PF('dlgImportarExcelHome').hide();"
+                            styleClass="p-button-success" />
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <!-- ===== ALERTA INICIO DE SESIÓN: Precios sin enviar al cliente (CATALOGO / ADMIN) ===== -->
+        <h:panelGroup rendered="#{request.isUserInRole('ROLE_CATALOGO')}">
+            <h:form id="formAlertaCatalogo">
+                <p:dialog id="dlgAlertaCatalogo"
+                          header="⚠ Precios pendientes sin enviar al cliente"
+                          widgetVar="dlgAlertaCatalogoWV"
+                          modal="true"
+                          width="680"
+                          closable="false"
+                          closeOnEscape="false"
+                          appendTo="@(body)"
+                          visible="#{alertaCatalogo.mostrarAlerta}"
+                          style="border-top: 4px solid #f59e0b;">
+
+                    <div style="padding: 4px 0 16px 0;">
+                        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px;
+                                    border-radius: 6px; margin-bottom: 16px;">
+                            <span style="font-size: 0.9rem; color: #92400e;">
+                                <i class="pi pi-info-circle" style="margin-right: 6px;"/>
+                                Los siguientes estilos tienen precios <strong>PENDIENTES</strong> o en
+                                <strong>NEGOCIACIÓN</strong> que todavía <strong>no se han enviado al cliente</strong>.
+                            </span>
+                        </div>
+
+                        <p:dataTable value="#{alertaCatalogo.alertas}"
+                                     var="a"
+                                     style="width: 100%;"
+                                     stripedRows="true"
+                                     scrollable="true"
+                                     scrollHeight="320">
+
+                            <p:column headerText="Cliente" style="width: 28%;">
+                                <h:outputText value="#{a.clienteNombre}"
+                                              style="font-weight: 600; color: #1e3a8a;" />
+                            </p:column>
+
+                            <p:column headerText="Estilo / Prototipo" style="width: 24%;">
+                                <h:outputText value="#{a.codigoCompleto}"
+                                              style="font-family: monospace; font-size: 0.9rem;" />
+                            </p:column>
+
+                            <p:column headerText="Descripción" style="width: 28%;">
+                                <h:outputText value="#{a.descripcion}" />
+                            </p:column>
+
+                            <p:column headerText="Pend." style="width: 10%; text-align: center;">
+                                <h:outputText rendered="#{a.totalPendiente gt 0}"
+                                              value="#{a.totalPendiente}"
+                                              style="background:#fef3c7; color:#92400e; padding:2px 8px;
+                                                     border-radius:12px; font-weight:700; font-size:0.85rem;" />
+                            </p:column>
+
+                            <p:column headerText="Neg." style="width: 10%; text-align: center;">
+                                <h:outputText rendered="#{a.totalNegociando gt 0}"
+                                              value="#{a.totalNegociando}"
+                                              style="background:#dbeafe; color:#1e40af; padding:2px 8px;
+                                                     border-radius:12px; font-weight:700; font-size:0.85rem;" />
+                            </p:column>
+                        </p:dataTable>
+
+                        <div style="text-align: right; margin-top: 16px; padding-top: 12px;
+                                    border-top: 1px solid #e5e7eb;">
+                            <small style="color: #6b7280; margin-right: 16px;">
+                                #{alertaCatalogo.totalProductos} estilo(s) pendiente(s) de envío
+                            </small>
+                            <p:commandButton value="Entendido"
+                                             icon="pi pi-check"
+                                             action="#{alertaCatalogo.cerrarAlerta()}"
+                                             update=":formAlertaCatalogo"
+                                             styleClass="p-button-warning"
+                                             style="font-weight: 600;" />
+                        </div>
+                    </div>
+                </p:dialog>
+            </h:form>
+        </h:panelGroup>
+
     </ui:define>
-    
 </ui:composition>
-</html>

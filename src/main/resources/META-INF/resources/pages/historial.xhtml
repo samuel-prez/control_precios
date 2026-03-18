@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<ui:composition template="/templates/template.xhtml">
+
+    <ui:define name="titulo">Historial de Cambios</ui:define>
+
+    <ui:define name="nombreUsuario">#{loginMB.username}</ui:define>
+
+    <ui:define name="contenido">
+
+        <div class="mb-4">
+            <h2 class="text-2xl font-bold mb-1">
+                <i class="pi pi-history mr-2"></i>Historial de Cambios
+            </h2>
+            <p class="text-color-secondary">Registro de todos los cambios realizados por los usuarios</p>
+        </div>
+
+        <p:dataTable value="#{historialController.todosLosCambios}"
+                     var="h"
+                     paginator="true"
+                     rows="15"
+                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                     rowsPerPageTemplate="10,15,25,50"
+                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
+                     emptyMessage="No hay cambios registrados"
+                     styleClass="p-datatable-sm"
+                     sortField="fechaCambio"
+                     sortOrder="DESCENDING"
+                     filterDisplay="row">
+
+            <p:column headerText="Fecha Estado" sortBy="#{h.fechaCambio}" style="width:150px">
+                <h:outputText value="#{h.fechaCambio}" rendered="#{h.tipoCambio == 'ESTADO'}">
+                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm" timeZone="America/Bogota"/>
+                </h:outputText>
+                <h:outputText value="—" rendered="#{h.tipoCambio != 'ESTADO'}" style="color:#999"/>
+            </p:column>
+
+            <p:column headerText="Fecha Precio" sortBy="#{h.fechaCambio}" style="width:150px">
+                <h:outputText value="#{h.fechaCambio}" rendered="#{h.tipoCambio == 'PRECIO'}">
+                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm" timeZone="America/Bogota"/>
+                </h:outputText>
+                <h:outputText value="—" rendered="#{h.tipoCambio != 'PRECIO'}" style="color:#999"/>
+            </p:column>
+
+            <p:column headerText="Cliente" sortBy="#{h.clienteNombre}"
+                      filterBy="#{h.clienteNombre}" filterMatchMode="contains">
+                <h:outputText value="#{h.clienteNombre}"/>
+            </p:column>
+
+            <p:column headerText="Producto" sortBy="#{h.productoDescripcion}"
+                      filterBy="#{h.productoDescripcion}" filterMatchMode="contains">
+                <h:outputText value="#{h.productoDescripcion}"/>
+            </p:column>
+
+            <p:column headerText="Color" sortBy="#{h.colorNombre}" style="width:120px">
+                <h:outputText value="#{h.colorNombre}"/>
+            </p:column>
+
+            <p:column headerText="Precio Anterior" style="width:130px; text-align:right">
+                <h:outputText value="#{h.valorAnterior}" rendered="#{h.valorAnterior != null}">
+                    <f:convertNumber type="currency" currencySymbol="$" groupingUsed="true" minFractionDigits="0" maxFractionDigits="0"/>
+                </h:outputText>
+                <h:outputText value="—" rendered="#{h.valorAnterior == null}" style="color:#999"/>
+            </p:column>
+
+            <p:column headerText="Precio Asignado" style="width:130px; text-align:right">
+                <span style="color:#2196F3; font-weight:600;">
+                    <h:outputText value="#{h.valorNuevo}" rendered="#{h.valorNuevo != null}">
+                        <f:convertNumber type="currency" currencySymbol="$" groupingUsed="true" minFractionDigits="0" maxFractionDigits="0"/>
+                    </h:outputText>
+                    <h:outputText value="—" rendered="#{h.valorNuevo == null}" style="color:#999; font-weight:normal;"/>
+                </span>
+            </p:column>
+
+            <p:column headerText="Estado Anterior" style="width:130px; text-align:center">
+                <h:outputText value="#{h.estadoAnterior}" rendered="#{h.estadoAnterior != null}"/>
+                <h:outputText value="—" rendered="#{h.estadoAnterior == null}" style="color:#999"/>
+            </p:column>
+
+            <p:column headerText="Estado Nuevo" style="width:130px; text-align:center">
+                <p:tag value="#{h.estadoNuevo}"
+                       severity="#{h.estadoNuevo == 'APROBADO' ? 'success' : (h.estadoNuevo == 'DESAPROBADO' ? 'danger' : 'warning')}"
+                       rendered="#{h.estadoNuevo != null}"/>
+                <h:outputText value="—" rendered="#{h.estadoNuevo == null}" style="color:#999"/>
+            </p:column>
+
+            <p:column headerText="Usuario" sortBy="#{h.usuario.nombre}"
+                      filterBy="#{h.usuario.nombre}" filterMatchMode="contains" style="width:130px">
+                <i class="pi pi-user" style="margin-right:4px;"></i>
+                <h:outputText value="#{h.usuario != null ? h.usuario.nombre : '—'}"/>
+            </p:column>
+
+        </p:dataTable>
+
+    </ui:define>
+
+</ui:composition>
+</html>

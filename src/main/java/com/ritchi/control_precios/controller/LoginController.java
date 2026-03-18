@@ -24,7 +24,6 @@ public class LoginController implements Serializable {
         return datoUser.toString();
     }
 
-    // ✅ MÉTODO LOGOUT AGREGADO
     public void logout() throws IOException {
         ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
         ec.invalidateSession();

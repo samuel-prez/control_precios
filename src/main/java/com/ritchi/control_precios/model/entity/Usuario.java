@@ -28,6 +28,9 @@ public class Usuario implements Serializable {
     @Column(name = "correo")
     private String email;
 
+    @Column(name = "telefono", length = 20)
+    private String telefono;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_rol")
     private Rol rol;
